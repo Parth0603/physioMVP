@@ -1,0 +1,31 @@
+from app.models.user import User, UserRole
+from app.models.student_profile import StudentProfile
+from app.models.academic import Subject, Unit, Topic, DifficultyLevel
+from app.models.content import Content, ContentType
+from app.models.question import Question, QuestionOption, QuestionType
+from app.models.clinical_case import ClinicalCase
+from app.models.progress import StudentProgress
+from app.models.study_plan import StudyPlan, StudyPlanItem, PlanStatus, PlanItemStatus
+from app.models.attempt import Attempt
+
+__all__ = [
+    "User",
+    "UserRole",
+    "StudentProfile",
+    "Subject",
+    "Unit",
+    "Topic",
+    "DifficultyLevel",
+    "Content",
+    "ContentType",
+    "Question",
+    "QuestionOption",
+    "QuestionType",
+    "ClinicalCase",
+    "StudentProgress",
+    "StudyPlan",
+    "StudyPlanItem",
+    "PlanStatus",
+    "PlanItemStatus",
+    "Attempt",
+]
