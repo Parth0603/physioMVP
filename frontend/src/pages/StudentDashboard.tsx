@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { academicService } from '../services/academicService';
 import { progressService } from '../services/progressService';
-import { Subject, ProgressSummary, StudentProgress } from '../types';
+import { adaptiveService } from '../services/adaptiveService';
+import {
+  Subject,
+  ProgressSummary,
+  StudentProgress,
+  StudyPlan,
+  LearningGapItem,
+  RevisionDueItem,
+} from '../types';
 import {
   BookOpen,
   CheckCircle2,
@@ -12,54 +20,116 @@ import {
   Sparkles,
   Award,
   ChevronRight,
+  AlertTriangle,
+  Calendar,
+  CheckCircle,
+  RotateCw,
+  ClipboardCheck,
 } from 'lucide-react';
 
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [summary, setSummary] = useState<ProgressSummary | null>(null);
   const [recentProgress, setRecentProgress] = useState<StudentProgress[]>([]);
+  const [studyPlan, setStudyPlan] = useState<StudyPlan | null>(null);
+  const [gaps, setGaps] = useState<LearningGapItem[]>([]);
+  const [revisionsDue, setRevisionsDue] = useState<RevisionDueItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [generatingPlan, setGeneratingPlan] = useState<boolean>(false);
 
   useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        const [subjs, sumData, progData] = await Promise.all([
-          academicService.getSubjects(),
-          progressService.getSummary(),
-          progressService.getAllProgress(),
-        ]);
-        setSubjects(subjs);
-        setSummary(sumData);
-        setRecentProgress(progData);
-      } catch (err) {
-        console.error('Failed to load student dashboard data', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadDashboardData();
   }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [subjs, sumData, progData, activePlan, gapsData, revData] = await Promise.all([
+        academicService.getSubjects(),
+        progressService.getSummary(),
+        progressService.getAllProgress(),
+        adaptiveService.getActiveStudyPlan().catch(() => null),
+        adaptiveService.getLearningGaps().catch(() => []),
+        adaptiveService.getRevisionDue().catch(() => []),
+      ]);
+
+      setSubjects(subjs);
+      setSummary(sumData);
+      setRecentProgress(progData);
+      setStudyPlan(activePlan);
+      setGaps(gapsData);
+      setRevisionsDue(revData);
+    } catch (err) {
+      console.error('Failed to load student dashboard data', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGeneratePlan = async () => {
+    try {
+      setGeneratingPlan(true);
+      const newPlan = await adaptiveService.generateStudyPlan();
+      setStudyPlan(newPlan);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to generate study plan');
+    } finally {
+      setGeneratingPlan(false);
+    }
+  };
+
+  const handleCompleteItem = async (itemId: number) => {
+    try {
+      const updatedItem = await adaptiveService.completePlanItem(itemId);
+      if (studyPlan) {
+        setStudyPlan({
+          ...studyPlan,
+          items: studyPlan.items.map((it) => (it.id === itemId ? updatedItem : it)),
+        });
+      }
+    } catch (err) {
+      console.error('Failed to mark item completed', err);
+    }
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-8 h-8 border-4 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-[#0d3834] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   const profile = user?.student_profile;
+  const hasTakenAssessment = (summary?.total_attempts || 0) > 0 || recentProgress.length > 0;
+
+  const getPriorityBadge = (priority: number) => {
+    switch (priority) {
+      case 1:
+        return 'bg-rose-100 text-rose-800 border-rose-200';
+      case 2:
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 3:
+        return 'bg-[#edf7f6] text-[#0d3834] border-[#b0dcd5]';
+      default:
+        return 'bg-[#f0fdf9] text-[#065f46] border-[#a7f3d0]';
+    }
+  };
 
   return (
     <div className="space-y-8">
       {/* Student Welcome Header */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200/60 text-teal-700 text-xs font-semibold mb-3">
-            <span>BPT Year {profile?.academic_year || 1} • Semester {profile?.semester || 1}</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#edf7f6] border border-[#b0dcd5] text-[#0d3834] text-xs font-semibold mb-3">
+            <span>
+              BPT Year {profile?.academic_year || 1} • Semester {profile?.semester || 1}
+            </span>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+          <h2 className="text-2xl font-bold text-[#0d3834] tracking-tight">
             Welcome back, {user?.name}
           </h2>
           <p className="text-sm text-slate-500 mt-1 max-w-xl">
@@ -68,155 +138,348 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* Quick Stats Pill */}
-        <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+        <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
           <div className="text-center px-3">
-            <span className="block text-2xl font-bold text-slate-900">{summary?.average_mastery || 0}%</span>
-            <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Avg Mastery</span>
+            <span className="block text-2xl font-bold text-[#0d3834]">
+              {summary?.average_mastery ? Math.round(summary.average_mastery) : 0}%
+            </span>
+            <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
+              Avg Mastery
+            </span>
           </div>
           <div className="w-px h-8 bg-slate-200"></div>
           <div className="text-center px-3">
-            <span className="block text-2xl font-bold text-teal-600">{summary?.total_attempts || 0}</span>
-            <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Practices</span>
+            <span className="block text-2xl font-bold text-[#14b8a6]">
+              {summary?.total_attempts || 0}
+            </span>
+            <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
+              Attempts
+            </span>
+          </div>
+          <div className="w-px h-8 bg-slate-200"></div>
+          <div className="text-center px-3">
+            <span className="block text-2xl font-bold text-[#0d9488]">
+              {summary?.mastered_topics || 0}
+            </span>
+            <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
+              Mastered
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Grid: Subjects & AI Adaptive Plan */}
+      {/* Prominent Diagnostic CTA if no assessment taken */}
+      {!hasTakenAssessment && (
+        <div className="bg-[#0d3834] border border-[#155952] rounded-3xl p-8 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center md:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-semibold uppercase tracking-wider text-[#a7f3d0]">
+              <Sparkles className="w-4 h-4 text-[#2dd4bf]" /> Action Required
+            </div>
+            <h3 className="text-2xl font-bold">
+              Complete your diagnostic assessment to generate your personalized learning plan.
+            </h3>
+            <p className="text-slate-200 text-sm max-w-2xl">
+              PHYSIO-SMART uses diagnostic assessment data to identify topic-level gaps, assign mastery scores, and schedule spaced revision.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/assessments')}
+            className="px-6 py-3.5 bg-[#14b8a6] hover:bg-[#0d9488] text-white font-bold rounded-2xl shadow transition-all flex items-center gap-2 text-sm flex-shrink-0"
+          >
+            <ClipboardCheck className="w-5 h-5" /> Start Diagnostic Assessment
+          </button>
+        </div>
+      )}
+
+      {/* Grid: Main Learning Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left 2 Cols: Enrolled Subjects */}
+        {/* Left 2 Cols: Personalized Plan & Core Subjects */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-slate-900">Core Physiotherapy Subjects</h3>
-              <p className="text-xs text-slate-500">Explore units, curated anatomical concepts, and clinical guides</p>
-            </div>
-            <Link
-              to="/subjects"
-              className="text-xs font-semibold text-teal-600 hover:text-teal-700 flex items-center gap-1"
-            >
-              View All <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {subjects.map((subject) => {
-              const totalTopics = subject.units.reduce((acc, u) => acc + u.topics.length, 0);
-              return (
-                <div
-                  key={subject.id}
-                  className="bg-white border border-slate-200 rounded-xl p-5 hover:border-teal-300 hover:shadow-sm transition-all flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                        {subject.code}
-                      </span>
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        Year {subject.academic_year}, Sem {subject.semester}
-                      </span>
-                    </div>
-                    <h4 className="text-base font-bold text-slate-900">{subject.name}</h4>
-                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                      {subject.description || 'Foundational syllabus subject.'}
-                    </p>
-                  </div>
-
-                  <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-xs text-slate-500">
-                      <strong>{subject.units.length}</strong> Units • <strong>{totalTopics}</strong> Topics
-                    </span>
-                    <Link
-                      to={`/subjects/${subject.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700"
-                    >
-                      Study <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Continue Learning Section */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
+          {/* Today's Personalized Study Plan */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-teal-600" />
-                Recent Learning Activity
-              </h4>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-[#edf7f6] text-[#0d3834]">
+                    <Calendar className="w-4 h-4" />
+                  </span>
+                  <h3 className="text-lg font-bold text-slate-900">Today's Personalized Plan</h3>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Generated deterministically from your identified clinical knowledge gaps
+                </p>
+              </div>
+
+              <button
+                onClick={handleGeneratePlan}
+                disabled={generatingPlan}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors disabled:opacity-50"
+                title="Regenerate plan from latest performance"
+              >
+                <RotateCw className={`w-3.5 h-3.5 ${generatingPlan ? 'animate-spin' : ''}`} />
+                <span>Update Plan</span>
+              </button>
             </div>
-            {recentProgress.length > 0 ? (
+
+            {studyPlan && studyPlan.items && studyPlan.items.length > 0 ? (
               <div className="space-y-3">
-                {recentProgress.map((prog) => (
+                {studyPlan.items.map((item) => {
+                  const isCompleted = item.status === 'completed';
+                  return (
+                    <div
+                      key={item.id}
+                      className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-4 ${
+                        isCompleted
+                          ? 'bg-slate-50/70 border-slate-200 opacity-60'
+                          : 'bg-white border-slate-200 hover:border-[#2dd4bf] shadow-sm'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => handleCompleteItem(item.id)}
+                          disabled={isCompleted}
+                          className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-colors ${
+                            isCompleted
+                              ? 'bg-[#14b8a6] border-[#14b8a6] text-white'
+                              : 'border-slate-300 hover:border-[#0d3834] text-transparent'
+                          }`}
+                        >
+                          <CheckCircle className="w-4 h-4 text-white" />
+                        </button>
+                        <div>
+                          <p
+                            className={`text-sm font-bold ${
+                              isCompleted ? 'line-through text-slate-400' : 'text-slate-900'
+                            }`}
+                          >
+                            {item.topic?.name || item.topic_name || `Topic #${item.topic_id}`}
+                          </p>
+                          <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
+                            <span className="capitalize font-medium text-slate-600">
+                              {(item.content_type || item.task_type || 'concept').replace(/_/g, ' ')}
+                            </span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-slate-400" />
+                              {item.estimated_minutes || 30} min
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase border ${getPriorityBadge(
+                            item.priority
+                          )}`}
+                        >
+                          P{item.priority}
+                        </span>
+                        <Link
+                          to={`/topics/${item.topic_id}`}
+                          className="px-3 py-1.5 bg-[#edf7f6] hover:bg-[#d5ece8] text-[#0d3834] text-xs font-semibold rounded-xl transition-colors"
+                        >
+                          Study
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-6">
+                <p className="text-xs text-slate-500 mb-3">
+                  No active study plan generated yet. Complete a diagnostic test to initialize your daily study sequence.
+                </p>
+                <Link
+                  to="/assessments"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#0d3834] hover:bg-[#124842] text-white text-xs font-semibold rounded-xl shadow-sm transition-colors"
+                >
+                  <ClipboardCheck className="w-4 h-4" /> Start Assessment
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Enrolled Subjects */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Core Physiotherapy Subjects</h3>
+                <p className="text-xs text-slate-500">
+                  Explore units, anatomical concepts, and clinical guides
+                </p>
+              </div>
+              <Link
+                to="/subjects"
+                className="text-xs font-semibold text-[#0d3834] hover:text-[#14b8a6] flex items-center gap-1"
+              >
+                View All <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {subjects.map((subject) => {
+                const totalTopics = subject.units.reduce((acc, u) => acc + u.topics.length, 0);
+                return (
                   <div
-                    key={prog.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100"
+                    key={subject.id}
+                    className="bg-white border border-slate-200 rounded-2xl p-5 hover:border-[#2dd4bf] hover:shadow-sm transition-all flex flex-col justify-between"
                   >
                     <div>
-                      <p className="text-xs font-semibold text-slate-800">{prog.topic?.name || `Topic #${prog.topic_id}`}</p>
-                      <p className="text-[11px] text-slate-400">
-                        {prog.attempts} attempts • {prog.correct_attempts} correct
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                          {subject.code}
+                        </span>
+                        <span className="text-[11px] text-slate-400 font-medium">
+                          Year {subject.academic_year}, Sem {subject.semester}
+                        </span>
+                      </div>
+                      <h4 className="text-base font-bold text-slate-900">{subject.name}</h4>
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                        {subject.description || 'Foundational syllabus subject.'}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <span className="text-xs font-bold text-teal-700">{prog.mastery_score.toFixed(0)}% Mastery</span>
+
+                    <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-xs text-slate-500">
+                        <strong>{subject.units.length}</strong> Units •{' '}
+                        <strong>{totalTopics}</strong> Topics
+                      </span>
                       <Link
-                        to={`/topics/${prog.topic_id}`}
-                        className="block text-[11px] text-teal-600 hover:underline font-medium"
+                        to={`/subjects/${subject.id}`}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-[#0d3834] hover:text-[#14b8a6]"
                       >
-                        Review
+                        Study <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Col: Learning Gaps & Spaced Revision Due */}
+        <div className="space-y-6">
+          {/* Priority Learning Gaps */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-lg bg-rose-50 text-rose-700">
+                  <AlertTriangle className="w-4 h-4" />
+                </span>
+                <h4 className="text-base font-bold text-slate-900">Learning Gaps</h4>
+              </div>
+              <span className="text-xs font-bold text-slate-500">
+                {gaps.length} Identified
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Topics needing clinical reinforcement, ranked by priority.
+            </p>
+
+            {gaps.length > 0 ? (
+              <div className="space-y-3">
+                {gaps.slice(0, 5).map((gap) => (
+                  <div
+                    key={gap.topic_id}
+                    className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-slate-900 line-clamp-1">
+                        {gap.topic_name}
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        {gap.subject_name} • {gap.attempts} Attempts
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border mb-1 ${getPriorityBadge(
+                          gap.priority_level
+                        )}`}
+                      >
+                        {gap.priority_label}
+                      </span>
+                      <span className="block text-xs font-black text-slate-700">
+                        {Math.round(gap.mastery_score)}%
+                      </span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-400 py-4 text-center">
-                No recent study activity recorded yet. Pick a subject above to begin.
-              </p>
+              <div className="p-4 rounded-2xl bg-slate-50 text-center text-xs text-slate-500">
+                {hasTakenAssessment
+                  ? 'Great job! No high or medium learning gaps detected.'
+                  : 'Take diagnostic assessment to identify learning gaps.'}
+              </div>
             )}
           </div>
-        </div>
 
-        {/* Right Col: Adaptive Plan Placeholder (Strictly Part 1 specification) */}
-        <div className="space-y-6">
-          <div className="bg-gradient-to-b from-white to-slate-50 border border-slate-200 rounded-2xl p-6 shadow-sm relative overflow-hidden">
-            <div className="flex items-center gap-2 text-teal-700 text-xs font-bold uppercase tracking-wider mb-3">
-              <Sparkles className="w-4 h-4" />
-              Adaptive AI Engine
+          {/* Spaced Revision Due */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-lg bg-[#f0fdf9] text-[#0d3834]">
+                  <Clock className="w-4 h-4" />
+                </span>
+                <h4 className="text-base font-bold text-slate-900">Revision Due</h4>
+              </div>
+              <span className="text-xs font-bold text-[#14b8a6]">Spaced Repetition</span>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">
-              Your Personalized Plan
-            </h3>
-            <p className="text-xs text-slate-500 leading-relaxed mb-6">
-              PHYSIO-SMART uses clinical knowledge gap analysis to tailor topic sequencing, revision intervals, and practice cases.
+            <p className="text-xs text-slate-500">
+              Scheduled clinical refreshers to prevent knowledge decay.
             </p>
 
-            {/* Clear, honest Part 1 Notice */}
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 space-y-2">
-              <div className="font-semibold flex items-center gap-1.5 text-amber-800">
-                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                Diagnostic Assessment Pending
+            {revisionsDue.length > 0 ? (
+              <div className="space-y-3">
+                {revisionsDue.slice(0, 4).map((rev) => (
+                  <div
+                    key={rev.topic_id}
+                    className="p-3.5 rounded-2xl bg-[#f0fdf9] border border-[#a7f3d0] flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-slate-900 line-clamp-1">
+                        {rev.topic_name}
+                      </p>
+                      <p className="text-[11px] text-[#0d9488]">
+                        {rev.is_overdue ? 'Due today' : 'Scheduled'} • Mastery{' '}
+                        {Math.round(rev.mastery_score)}%
+                      </p>
+                    </div>
+                    <Link
+                      to={`/topics/${rev.topic_id}`}
+                      className="px-3 py-1 bg-[#0d3834] hover:bg-[#124842] text-white text-[11px] font-bold rounded-xl shadow-sm transition-colors"
+                    >
+                      Revise
+                    </Link>
+                  </div>
+                ))}
               </div>
-              <p className="text-amber-800/90 leading-normal">
-                Personalized learning will appear here after your diagnostic assessment in Part 2.
-              </p>
-            </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-slate-50 text-center text-xs text-slate-500">
+                No revisions due today.
+              </div>
+            )}
+          </div>
 
-            <div className="mt-6 pt-6 border-t border-slate-200/80 space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-600 font-medium">Knowledge Diagnostic</span>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-200/70 text-slate-600">Part 2</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-600 font-medium">Adaptive Gap Analysis</span>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-200/70 text-slate-600">Part 2</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-600 font-medium">Clinical Case Reasoning</span>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-200/70 text-slate-600">Part 3</span>
-              </div>
+          {/* Quick Assessment CTA Card */}
+          <div className="bg-[#0d3834] border border-[#155952] rounded-3xl p-6 text-white shadow-md space-y-3">
+            <div className="flex items-center gap-2 text-[#2dd4bf] text-xs font-bold uppercase tracking-wider">
+              <ClipboardCheck className="w-4 h-4" /> Diagnostic Assessment
             </div>
+            <h4 className="text-base font-bold">Ready for a Knowledge Check?</h4>
+            <p className="text-xs text-slate-200 leading-relaxed">
+              Diagnostic tests re-calibrate your mastery scores and keep your daily learning plan accurate.
+            </p>
+            <Link
+              to="/assessments"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#14b8a6] hover:bg-[#0d9488] text-white text-xs font-bold rounded-xl transition-colors shadow"
+            >
+              Take Assessment <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </div>

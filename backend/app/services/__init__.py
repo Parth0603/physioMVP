@@ -4,6 +4,8 @@ from app.services.content_service import content_service, ContentService
 from app.services.question_service import question_service, QuestionService
 from app.services.progress_service import progress_service, ProgressService
 from app.services.study_plan_service import study_plan_service, StudyPlanService
+from app.services.adaptive_service import adaptive_service, AdaptiveService
+from app.services.assessment_service import assessment_service, AssessmentService
 
 __all__ = [
     "auth_service",
@@ -18,4 +20,8 @@ __all__ = [
     "ProgressService",
     "study_plan_service",
     "StudyPlanService",
+    "adaptive_service",
+    "AdaptiveService",
+    "assessment_service",
+    "AssessmentService",
 ]

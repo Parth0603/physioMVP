@@ -1,5 +1,5 @@
 """Question & Assessment service."""
-from typing import List
+from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.core.exceptions import EntityNotFoundException
 from app.models.question import Question, QuestionOption
@@ -8,6 +8,12 @@ from app.repositories.domain import question_repo, topic_repo
 
 
 class QuestionService:
+    @staticmethod
+    def list_questions(
+        db: Session, skip: int = 0, limit: int = 100, topic_id: Optional[int] = None
+    ) -> List[Question]:
+        return question_repo.list_all(db, skip=skip, limit=limit, topic_id=topic_id)
+
     @staticmethod
     def list_questions_by_topic(db: Session, topic_id: int) -> List[Question]:
         return question_repo.get_by_topic(db, topic_id)
@@ -46,10 +52,17 @@ class QuestionService:
 
     @staticmethod
     def get_question_by_id(db: Session, question_id: int) -> Question:
-        question = question_repo.get(db, question_id)
+        question = question_repo.get_with_options(db, question_id)
         if not question:
             raise EntityNotFoundException("Question", question_id)
         return question
+
+    @staticmethod
+    def update_question(db: Session, question_id: int, data: QuestionUpdate) -> Question:
+        question = question_repo.get(db, question_id)
+        if not question:
+            raise EntityNotFoundException("Question", question_id)
+        return question_repo.update(db, question, data.dict(exclude_unset=True))
 
     @staticmethod
     def delete_question(db: Session, question_id: int) -> None:

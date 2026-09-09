@@ -7,6 +7,7 @@ from app.models.clinical_case import ClinicalCase
 from app.models.progress import StudentProgress
 from app.models.study_plan import StudyPlan, StudyPlanItem, PlanStatus, PlanItemStatus
 from app.models.attempt import Attempt
+from app.models.assessment import Assessment, AssessmentQuestion, AssessmentType
 
 __all__ = [
     "User",
@@ -28,4 +29,7 @@ __all__ = [
     "PlanStatus",
     "PlanItemStatus",
     "Attempt",
+    "Assessment",
+    "AssessmentQuestion",
+    "AssessmentType",
 ]

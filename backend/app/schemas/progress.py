@@ -1,7 +1,7 @@
 """Student Progress schemas."""
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel
+from typing import Optional, List
+from pydantic import BaseModel, ConfigDict
 from app.schemas.academic import TopicResponse
 
 
@@ -34,13 +34,46 @@ class StudentProgressResponse(StudentProgressBase):
     updated_at: datetime
     topic: Optional[TopicResponse] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OverallProgressSummary(BaseModel):
     total_topics: int
     mastered_topics: int
     in_progress_topics: int
+    weak_topics: int
     average_mastery: float
     total_attempts: int
+    has_completed_diagnostic: bool = False
+
+
+class SubjectProgressSummary(BaseModel):
+    subject_id: int
+    subject_name: str
+    subject_code: str
+    total_topics: int
+    mastered_topics: int
+    average_mastery: float
+    strong_topics_count: int
+    moderate_topics_count: int
+    weak_topics_count: int
+
+
+class LearningGapItem(BaseModel):
+    topic_id: int
+    topic_name: str
+    subject_name: str
+    mastery_score: float
+    attempts: int
+    priority_level: int
+    priority_label: str  # "HIGH", "MEDIUM", "LOW"
+    recommended_action: str
+
+
+class RevisionDueItem(BaseModel):
+    topic_id: int
+    topic_name: str
+    subject_name: str
+    mastery_score: float
+    next_review_at: Optional[datetime] = None
+    is_overdue: bool = False

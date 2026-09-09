@@ -1,12 +1,13 @@
-"""Seed script to populate initial demonstration dataset for PHYSIO-SMART.
+"""Seed script to populate demonstration dataset for PHYSIO-SMART.
 
 Populates:
 - Demo Users: Student, Faculty, Admin
 - BPT Subjects: Anatomy, Physiology, Exercise Therapy, Electrotherapy
 - Units & Topics with difficulty ratings
 - Verified knowledge base content
-- Sample practice questions with MCQ options
-- Demo progress record for student
+- Authentic topic-balanced clinical MCQs with option sets and detailed explanations
+- Diagnostic Assessments
+- Initial student progress and attempts
 """
 import sys
 import os
@@ -21,6 +22,7 @@ from app.models.student_profile import StudentProfile
 from app.models.academic import Subject, Unit, Topic, DifficultyLevel
 from app.models.content import Content, ContentType
 from app.models.question import Question, QuestionOption, QuestionType
+from app.models.assessment import Assessment, AssessmentQuestion, AssessmentType
 from app.models.progress import StudentProgress
 from app.models.study_plan import StudyPlan, StudyPlanItem, PlanStatus, PlanItemStatus
 
@@ -31,270 +33,296 @@ def seed_database():
 
     db = SessionLocal()
     try:
-        # Check if already seeded
-        if db.query(User).filter(User.email == "student@physiosmart.edu").first():
-            print("Database already contains seed data. Skipping.")
-            return
+        # Check if users already seeded
+        student_user = db.query(User).filter(User.email == "student@physiosmart.edu").first()
+        if not student_user:
+            print("Seeding Users...")
+            student_user = User(
+                name="Aarav Sharma",
+                email="student@physiosmart.edu",
+                password_hash=get_password_hash("Password123!"),
+                role=UserRole.STUDENT,
+                is_active=True,
+            )
+            db.add(student_user)
+            db.commit()
+            db.refresh(student_user)
 
-        print("Seeding Users...")
-        # 1. Users & Profiles
-        student_user = User(
-            name="Aarav Sharma",
-            email="student@physiosmart.edu",
-            password_hash=get_password_hash("Password123!"),
-            role=UserRole.STUDENT,
-            is_active=True,
-        )
-        db.add(student_user)
-        db.commit()
-        db.refresh(student_user)
+            student_profile = StudentProfile(
+                user_id=student_user.id,
+                institution="Apex Institute of Physiotherapy & Allied Sciences",
+                course="Bachelor of Physiotherapy (BPT)",
+                academic_year=1,
+                semester=1,
+            )
+            db.add(student_profile)
 
-        student_profile = StudentProfile(
-            user_id=student_user.id,
-            institution="Apex Institute of Physiotherapy & Allied Sciences",
-            course="Bachelor of Physiotherapy (BPT)",
-            academic_year=1,
-            semester=1,
-        )
-        db.add(student_profile)
+            faculty_user = User(
+                name="Dr. Sunita Deshmukh, MPT",
+                email="faculty@physiosmart.edu",
+                password_hash=get_password_hash("FacultyPass123!"),
+                role=UserRole.FACULTY,
+                is_active=True,
+            )
+            admin_user = User(
+                name="Admin System",
+                email="admin@physiosmart.edu",
+                password_hash=get_password_hash("AdminPass123!"),
+                role=UserRole.ADMIN,
+                is_active=True,
+            )
+            db.add_all([faculty_user, admin_user])
+            db.commit()
 
-        faculty_user = User(
-            name="Dr. Sunita Deshmukh, MPT",
-            email="faculty@physiosmart.edu",
-            password_hash=get_password_hash("FacultyPass123!"),
-            role=UserRole.FACULTY,
-            is_active=True,
-        )
-        admin_user = User(
-            name="Admin System",
-            email="admin@physiosmart.edu",
-            password_hash=get_password_hash("AdminPass123!"),
-            role=UserRole.ADMIN,
-            is_active=True,
-        )
-        db.add(faculty_user)
-        db.add(admin_user)
-        db.commit()
-        db.refresh(faculty_user)
-        db.refresh(admin_user)
+        # Check / Seed Academic Hierarchy
+        anatomy = db.query(Subject).filter(Subject.code == "ANAT101").first()
+        if not anatomy:
+            print("Seeding Subjects & Units...")
+            anatomy = Subject(
+                name="Human Anatomy",
+                code="ANAT101",
+                description="Musculoskeletal, neurovascular, and arthrological structures essential for physical assessment and manual therapeutics.",
+                academic_year=1,
+                semester=1,
+                is_active=True,
+            )
+            physio = Subject(
+                name="Human Physiology",
+                code="PHYS102",
+                description="Neuromuscular transmission, cardiorespiratory kinetics, and tissue repair biology.",
+                academic_year=1,
+                semester=1,
+                is_active=True,
+            )
+            ex_therapy = Subject(
+                name="Exercise Therapy Foundation",
+                code="EXTH103",
+                description="Biomechanics of therapeutic movement, ROM, and manual resistance techniques.",
+                academic_year=1,
+                semester=2,
+                is_active=True,
+            )
+            electro = Subject(
+                name="Electrotherapy Principles",
+                code="ELEC104",
+                description="Biophysical foundations of low, medium, and high frequency therapeutic currents.",
+                academic_year=1,
+                semester=2,
+                is_active=True,
+            )
+            db.add_all([anatomy, physio, ex_therapy, electro])
+            db.commit()
+            db.refresh(anatomy)
+            db.refresh(physio)
 
-        print("Seeding Subjects, Units, and Topics...")
-        # 2. Anatomy
-        anatomy = Subject(
-            name="Human Anatomy",
-            code="ANAT101",
-            description="Detailed study of musculoskeletal, neurovascular, and visceral structures essential for clinical assessment and manual therapeutics.",
-            academic_year=1,
-            semester=1,
-            is_active=True,
-        )
-        db.add(anatomy)
-        db.commit()
-        db.refresh(anatomy)
+            unit_upper = Unit(
+                subject_id=anatomy.id,
+                name="Unit 1: Upper Limb Anatomy & Biomechanics",
+                description="Kinematics, arthrology, and innervation of shoulder, arm, and forearm.",
+                order_index=1,
+            )
+            unit_lower = Unit(
+                subject_id=anatomy.id,
+                name="Unit 2: Lower Limb Osteology & Arthrology",
+                description="Pelvic girdle, hip joint, knee complex, and ankle mechanics.",
+                order_index=2,
+            )
+            unit_neuro = Unit(
+                subject_id=physio.id,
+                name="Unit 1: Neuromuscular Physiology",
+                description="Excitation-contraction coupling and motor unit recruitment.",
+                order_index=1,
+            )
+            db.add_all([unit_upper, unit_lower, unit_neuro])
+            db.commit()
+            db.refresh(unit_upper)
+            db.refresh(unit_lower)
+            db.refresh(unit_neuro)
 
-        unit_upper = Unit(
-            subject_id=anatomy.id,
-            name="Unit 1: Upper Limb Anatomy & Biomechanics",
-            description="Osteology, myology, and articular kinematics of the shoulder, arm, forearm, and hand.",
-            order_index=1,
-        )
-        unit_lower = Unit(
-            subject_id=anatomy.id,
-            name="Unit 2: Lower Limb Osteology & Arthrology",
-            description="Pelvic girdle, hip joint, knee complex, and ankle-foot mechanics.",
-            order_index=2,
-        )
-        db.add_all([unit_upper, unit_lower])
-        db.commit()
-        db.refresh(unit_upper)
-        db.refresh(unit_lower)
+            topic_rotator = Topic(
+                unit_id=unit_upper.id,
+                name="Rotator Cuff Muscles & Shoulder Stability",
+                description="Supraspinatus, Infraspinatus, Teres Minor, Subscapularis: force couples and stabilization.",
+                order_index=1,
+                difficulty_level=DifficultyLevel.BEGINNER,
+                is_active=True,
+            )
+            topic_brachial = Topic(
+                unit_id=unit_upper.id,
+                name="Brachial Plexus Organization & Injuries",
+                description="Roots, trunks, divisions, terminal cords, Erb's and Klumpke's lesions.",
+                order_index=2,
+                difficulty_level=DifficultyLevel.INTERMEDIATE,
+                is_active=True,
+            )
+            topic_knee = Topic(
+                unit_id=unit_lower.id,
+                name="Knee Joint Complex & Ligamentous Restraints",
+                description="Cruciate ligaments (ACL/PCL), collaterals, menisci, and screw-home mechanism.",
+                order_index=1,
+                difficulty_level=DifficultyLevel.INTERMEDIATE,
+                is_active=True,
+            )
+            topic_sliding = Topic(
+                unit_id=unit_neuro.id,
+                name="Sliding Filament Theory of Muscle Contraction",
+                description="Cross-bridge cycle, Calcium release, ATP binding and detachment.",
+                order_index=1,
+                difficulty_level=DifficultyLevel.BEGINNER,
+                is_active=True,
+            )
+            db.add_all([topic_rotator, topic_brachial, topic_knee, topic_sliding])
+            db.commit()
 
-        # Topics for Upper Limb
-        topic_rotator = Topic(
-            unit_id=unit_upper.id,
-            name="Rotator Cuff Muscles & Shoulder Stability",
-            description="Supraspinatus, Infraspinatus, Teres Minor, and Subscapularis: origin, insertion, innervation, and force-couple stabilization.",
-            order_index=1,
-            difficulty_level=DifficultyLevel.BEGINNER,
-            is_active=True,
-        )
-        topic_brachial = Topic(
-            unit_id=unit_upper.id,
-            name="Brachial Plexus Organization & Injuries",
-            description="Roots, trunks, divisions, cords, branches, and clinical lesions (Erb's and Klumpke's palsies).",
-            order_index=2,
-            difficulty_level=DifficultyLevel.INTERMEDIATE,
-            is_active=True,
-        )
-        # Topic for Lower Limb
-        topic_knee = Topic(
-            unit_id=unit_lower.id,
-            name="Knee Joint Complex & Ligamentous Restraints",
-            description="Cruciate ligaments (ACL/PCL), collateral ligaments (MCL/LCL), menisci, and screw-home mechanism.",
-            order_index=1,
-            difficulty_level=DifficultyLevel.INTERMEDIATE,
-            is_active=True,
-        )
-        db.add_all([topic_rotator, topic_brachial, topic_knee])
-        db.commit()
-        db.refresh(topic_rotator)
-        db.refresh(topic_brachial)
-        db.refresh(topic_knee)
+        # Re-fetch topics
+        topic_rotator = db.query(Topic).filter(Topic.name.like("%Rotator Cuff%")).first()
+        topic_brachial = db.query(Topic).filter(Topic.name.like("%Brachial Plexus%")).first()
+        topic_knee = db.query(Topic).filter(Topic.name.like("%Knee Joint%")).first()
+        topic_sliding = db.query(Topic).filter(Topic.name.like("%Sliding Filament%")).first()
 
-        # 3. Physiology
-        physio = Subject(
-            name="Human Physiology",
-            code="PHYS102",
-            description="Physiological foundations of neuromuscular transmission, cardiorespiratory response to exercise, and tissue healing.",
-            academic_year=1,
-            semester=1,
-            is_active=True,
+        print("Seeding Topic-Balanced Questions for Assessments...")
+        # Helper to create question + options
+        def add_mcq(topic_id, text, correct, wrong_list, explanation, difficulty=DifficultyLevel.BEGINNER):
+            # Check if exists
+            existing = db.query(Question).filter(Question.question_text == text).first()
+            if existing:
+                return existing
+
+            q = Question(
+                topic_id=topic_id,
+                question_text=text,
+                question_type=QuestionType.MCQ,
+                difficulty_level=difficulty,
+                explanation=explanation,
+                correct_answer=correct,
+                is_verified=True,
+            )
+            db.add(q)
+            db.commit()
+            db.refresh(q)
+
+            opts = [QuestionOption(question_id=q.id, option_text=correct, is_correct=True)]
+            for w in wrong_list:
+                opts.append(QuestionOption(question_id=q.id, option_text=w, is_correct=False))
+            db.add_all(opts)
+            db.commit()
+            return q
+
+        # --- Questions for Rotator Cuff ---
+        q1 = add_mcq(
+            topic_rotator.id,
+            "Which muscle of the rotator cuff initiates the first 15 degrees of shoulder abduction?",
+            "Supraspinatus",
+            ["Infraspinatus", "Teres Minor", "Subscapularis"],
+            "Supraspinatus initiates the first 15° of glenohumeral abduction before the deltoid becomes mechanically advantageous.",
+            DifficultyLevel.BEGINNER,
         )
-        db.add(physio)
-        db.commit()
-        db.refresh(physio)
-
-        unit_neuro = Unit(
-            subject_id=physio.id,
-            name="Unit 1: Neuromuscular Physiology",
-            description="Action potentials, synaptic transmission, and excitation-contraction coupling.",
-            order_index=1,
+        q2 = add_mcq(
+            topic_rotator.id,
+            "During arm elevation, which force couple counters the upward shear force of the deltoid?",
+            "Infraspinatus, Subscapularis, and Teres Minor",
+            ["Pectoralis major and latissimus dorsi", "Biceps brachii and coracobrachialis", "Trapezius and levator scapulae"],
+            "The inferior rotator cuff (infraspinatus, subscapularis, teres minor) exerts a downward and medial compressive force seating the humeral head.",
+            DifficultyLevel.INTERMEDIATE,
         )
-        db.add(unit_neuro)
-        db.commit()
-        db.refresh(unit_neuro)
-
-        topic_sliding = Topic(
-            unit_id=unit_neuro.id,
-            name="Sliding Filament Theory of Muscle Contraction",
-            description="Actin-myosin cross-bridge cycle, ATP hydrolysis, role of Calcium and Troponin-Tropomyosin complex.",
-            order_index=1,
-            difficulty_level=DifficultyLevel.BEGINNER,
-            is_active=True,
-        )
-        db.add(topic_sliding)
-        db.commit()
-        db.refresh(topic_sliding)
-
-        # 4. Exercise Therapy
-        ex_therapy = Subject(
-            name="Exercise Therapy Foundation",
-            code="EXTH103",
-            description="Mechanical principles of therapeutic movement, ROM, stretching, resistance, and joint mobilization.",
-            academic_year=1,
-            semester=2,
-            is_active=True,
-        )
-        db.add(ex_therapy)
-        db.commit()
-
-        # 5. Electrotherapy
-        electro = Subject(
-            name="Electrotherapy Principles",
-            code="ELEC104",
-            description="Biophysical foundations of low, medium, and high frequency electrical currents, ultrasound, and thermal modalities.",
-            academic_year=1,
-            semester=2,
-            is_active=True,
-        )
-        db.add(electro)
-        db.commit()
-
-        print("Seeding Knowledge Base Content...")
-        # Curated Content for Rotator Cuff
-        content1 = Content(
-            topic_id=topic_rotator.id,
-            title="SITS Functional Anatomy & Dynamic Stabilization",
-            content_type=ContentType.CONCEPT,
-            content_body="""The rotator cuff comprises four dynamic stabilizers (SITS):
-1. **Supraspinatus**: Initiates humeral abduction (first 15°) and pulls the humeral head into the glenoid fossa.
-2. **Infraspinatus**: Primary external rotator with the arm by the side; counters superior translation forces from deltoid.
-3. **Teres Minor**: Assists in external rotation and provides posterior inferior stability during elevation.
-4. **Subscapularis**: Substantial anterior stabilizer and internal rotator; prevents anterior humeral translation.
-
-**Clinical Biomechanics Insight**: 
-The rotator cuff acts as a dynamic force couple with the deltoid. While the deltoid exerts an upward shear force on the humeral head, the infraspinatus, subscapularis, and teres minor produce an inferior and medial compressive vector, seating the humeral head centered within the glenoid fossa during arm elevation.""",
-            difficulty_level=DifficultyLevel.BEGINNER,
-            reference="BD Chaurasia's Human Anatomy - Regional & Applied: Volume 1 (Upper Limb & Thorax)",
-            is_verified=True,
-        )
-
-        content2 = Content(
-            topic_id=topic_rotator.id,
-            title="Clinical Practice Guidelines: Rotator Cuff Impingement & Tendinopathy",
-            content_type=ContentType.CLINICAL_GUIDELINE,
-            content_body="""### Subjective & Objective Examination:
-- **Painful Arc**: Patient typically experiences sharp lateral shoulder pain between 60° and 120° of active abduction.
-- **Diagnostic Special Tests**: 
-  - *Neer Impingement Test*: Passive elevation in internal rotation compresses supraspinatus against anterior acromion.
-  - *Hawkins-Kennedy Test*: Passive internal rotation at 90° flexion impinges tendon against coracoacromial ligament.
-  - *Empty Can (Jobe) Test*: Assesses supraspinatus isolation and tears.
-
-### Conservative Physiotherapy Management:
-1. **Acute Phase**: Relative rest from aggravating overhead activities, cryotherapy for reactive tendon pain, isometric cuff setting at neutral.
-2. **Subacute Restoration**: Scapulothoracic re-education (serratus anterior and lower trapezius activation) to restore upward rotation.
-3. **Strengthening**: High-load slow resistance (HSR) protocol for eccentric-concentric strengthening of rotator cuff and periscapular stabilizers.""",
-            difficulty_level=DifficultyLevel.INTERMEDIATE,
-            reference="Magee Orthopedic Physical Assessment (7th Ed.) & British Journal of Sports Medicine (BJSM Guidelines)",
-            is_verified=True,
+        q3 = add_mcq(
+            topic_rotator.id,
+            "A patient presents with sharp anterolateral shoulder pain during active abduction between 70° and 120°. What clinical sign is this?",
+            "Painful Arc Syndrome",
+            ["Frozen Shoulder sign", "Sulcus sign", "Apprehension sign"],
+            "A painful arc between 60°-120° suggests subacromial impingement of the supraspinatus tendon.",
+            DifficultyLevel.BEGINNER,
         )
 
-        # Curated Content for Sliding Filament
-        content3 = Content(
-            topic_id=topic_sliding.id,
-            title="Excitation-Contraction Coupling & Cross-Bridge Cycle",
-            content_type=ContentType.CONCEPT,
-            content_body="""The sliding filament model describes how muscle fibers generate tension and contract:
-1. **Action Potential**: Propagates down the motor neuron terminal, releasing Acetylcholine (ACh) into the synaptic cleft.
-2. **T-Tubule Depolarization**: Depolarization reaches the sarcoplasmic reticulum (SR), triggering Calcium release through ryanodine receptors.
-3. **Troponin Binding**: Calcium binds to Troponin C, shifting Tropomyosin away from actin's myosin-binding sites.
-4. **Power Stroke**: Myosin heads bind actin forming cross-bridges. ADP + Pi release produces conformational tilting of the myosin head (power stroke), sliding the thin filament toward the M-line.
-5. **Detachment**: New ATP binds myosin, detaching it from actin. ATP hydrolysis re-cocks the head for the next cycle.""",
-            difficulty_level=DifficultyLevel.BEGINNER,
-            reference="Guyton and Hall Textbook of Medical Physiology (14th Ed.)",
-            is_verified=True,
+        # --- Questions for Brachial Plexus ---
+        q4 = add_mcq(
+            topic_brachial.id,
+            "Erb-Duchenne palsy results from traction injury to which nerve roots of the brachial plexus?",
+            "C5 and C6 roots",
+            ["C8 and T1 roots", "C7 and C8 roots", "T1 and T2 roots"],
+            "Erb's palsy involves upper trunk (C5-C6) avulsion, causing characteristic 'waiter's tip' deformity.",
+            DifficultyLevel.INTERMEDIATE,
         )
-        db.add_all([content1, content2, content3])
-        db.commit()
-
-        print("Seeding Practice Questions...")
-        q1 = Question(
-            topic_id=topic_rotator.id,
-            question_text="A 42-year-old badminton player presents with shoulder pain during overhead smashes. Active abduction exhibits pain specifically between 70° and 110°. Which test specifically isolates and stresses the supraspinatus tendon?",
-            question_type=QuestionType.MCQ,
-            difficulty_level=DifficultyLevel.BEGINNER,
-            explanation="The Jobe (Empty Can) test positions the shoulder in 90° abduction and 30° horizontal advection with full internal rotation ('thumbs down'), which isolates supraspinatus tension against downward resistance.",
-            correct_answer="Jobe (Empty Can) Test",
-            is_verified=True,
+        q5 = add_mcq(
+            topic_brachial.id,
+            "Which nerve originating from the posterior cord innervates the triceps brachii and wrist extensors?",
+            "Radial nerve",
+            ["Median nerve", "Ulnar nerve", "Axillary nerve"],
+            "The radial nerve is the main terminal branch of the posterior cord (C5-T1).",
+            DifficultyLevel.BEGINNER,
         )
-        db.add(q1)
-        db.commit()
-        db.refresh(q1)
-
-        opt1 = QuestionOption(question_id=q1.id, option_text="Hawkins-Kennedy Test", is_correct=False)
-        opt2 = QuestionOption(question_id=q1.id, option_text="Jobe (Empty Can) Test", is_correct=True)
-        opt3 = QuestionOption(question_id=q1.id, option_text="Speed's Test", is_correct=False)
-        opt4 = QuestionOption(question_id=q1.id, option_text="Yergason's Test", is_correct=False)
-        db.add_all([opt1, opt2, opt3, opt4])
-        db.commit()
-
-        print("Seeding Demo Student Progress...")
-        demo_prog = StudentProgress(
-            student_id=student_user.id,
-            topic_id=topic_rotator.id,
-            mastery_score=68.5,
-            attempts=3,
-            correct_attempts=2,
-            confidence_score=0.75,
+        q6 = add_mcq(
+            topic_brachial.id,
+            "Klumpke's paralysis typically causes what clinical deformity in the hand?",
+            "Claw hand (intrinsic minus hand)",
+            ["Wrist drop", "Ape thumb deformity", "Bishop's hand"],
+            "Injury to C8-T1 leads to paralysis of intrinsic hand muscles, producing claw hand deformity.",
+            DifficultyLevel.INTERMEDIATE,
         )
-        db.add(demo_prog)
-        db.commit()
 
-        print("Database seed completed successfully!")
-        print(f"Demo Users:")
-        print(f"  Student: student@physiosmart.edu / Password123!")
-        print(f"  Faculty: faculty@physiosmart.edu / FacultyPass123!")
-        print(f"  Admin:   admin@physiosmart.edu   / AdminPass123!")
+        # --- Questions for Knee Joint ---
+        q7 = add_mcq(
+            topic_knee.id,
+            "Which special clinical test is most sensitive and specific for diagnosing an acute Anterior Cruciate Ligament (ACL) rupture?",
+            "Lachman Test",
+            ["Anterior Drawer Test", "McMurray Test", "Apley Grind Test"],
+            "The Lachman test performed at 20-30° flexion eliminates hamstring stabilization, making it superior to anterior drawer.",
+            DifficultyLevel.INTERMEDIATE,
+        )
+        q8 = add_mcq(
+            topic_knee.id,
+            "The 'screw-home' mechanism of the knee joint involves which terminal movement in closed kinetic chain extension?",
+            "Internal rotation of the femur on fixed tibia",
+            ["External rotation of the femur on fixed tibia", "Pure sagittal gliding without rotation", "Lateral tilt of the patella"],
+            "In weight-bearing closed chain extension, the femur medially rotates on the tibia during the terminal 5° to lock the knee.",
+            DifficultyLevel.ADVANCED,
+        )
+
+        # --- Questions for Sliding Filament ---
+        q9 = add_mcq(
+            topic_sliding.id,
+            "What critical ion binds to Troponin C to expose actin binding sites during muscle excitation-contraction coupling?",
+            "Calcium (Ca2+)",
+            ["Sodium (Na+)", "Potassium (K+)", "Magnesium (Mg2+)"],
+            "Calcium released from the sarcoplasmic reticulum binds Troponin C, shifting tropomyosin away from myosin-binding sites.",
+            DifficultyLevel.BEGINNER,
+        )
+        q10 = add_mcq(
+            topic_sliding.id,
+            "What causes detachment of the myosin cross-bridge head from actin at the conclusion of the power stroke?",
+            "Binding of a new ATP molecule to myosin",
+            ["Hydrolysis of ADP to AMP", "Efflux of calcium from the sarcoplasm", "Release of inorganic phosphate"],
+            "ATP binding triggers allosteric detachment. In the absence of ATP, rigor mortis occurs.",
+            DifficultyLevel.INTERMEDIATE,
+        )
+
+        # Seed Predefined Diagnostic Assessment
+        diag_assessment = db.query(Assessment).filter(Assessment.title.like("%Upper Limb & Joint Biomechanics%")).first()
+        if not diag_assessment:
+            print("Seeding Anatomy Diagnostic Assessment...")
+            diag_assessment = Assessment(
+                title="BPT Year 1: Upper Limb & Joint Biomechanics Diagnostic",
+                description="Comprehensive topic-balanced diagnostic test assessing Rotator Cuff, Brachial Plexus, Knee Ligament arthrology, and Muscle Mechanics.",
+                subject_id=anatomy.id,
+                assessment_type=AssessmentType.DIAGNOSTIC,
+                duration_minutes=25,
+                is_active=True,
+            )
+            db.add(diag_assessment)
+            db.commit()
+            db.refresh(diag_assessment)
+
+            question_pool = [q1, q2, q3, q4, q5, q6, q7, q8, q9, q10]
+            for idx, q_item in enumerate(question_pool, start=1):
+                aq = AssessmentQuestion(
+                    assessment_id=diag_assessment.id,
+                    question_id=q_item.id,
+                    order_index=idx,
+                )
+                db.add(aq)
+            db.commit()
+
+        print("Database seeding completed successfully for Part 2!")
     finally:
         db.close()
 

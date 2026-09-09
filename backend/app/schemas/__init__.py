@@ -15,11 +15,17 @@ from app.schemas.question import (
 )
 from app.schemas.progress import (
     StudentProgressBase, StudentProgressCreate, StudentProgressUpdate,
-    StudentProgressResponse, OverallProgressSummary
+    StudentProgressResponse, OverallProgressSummary, SubjectProgressSummary,
+    LearningGapItem, RevisionDueItem
 )
 from app.schemas.study_plan import (
     StudyPlanBase, StudyPlanCreate, StudyPlanResponse,
     StudyPlanItemBase, StudyPlanItemCreate, StudyPlanItemResponse
+)
+from app.schemas.assessment import (
+    AssessmentBase, AssessmentCreate, AssessmentResponse,
+    AssessmentStartResponse, QuestionForTest, OptionForTest,
+    AssessmentSubmitRequest, AssessmentResultResponse, TopicPerformance
 )
 
 __all__ = [
@@ -63,10 +69,22 @@ __all__ = [
     "StudentProgressUpdate",
     "StudentProgressResponse",
     "OverallProgressSummary",
+    "SubjectProgressSummary",
+    "LearningGapItem",
+    "RevisionDueItem",
     "StudyPlanBase",
     "StudyPlanCreate",
     "StudyPlanResponse",
     "StudyPlanItemBase",
     "StudyPlanItemCreate",
     "StudyPlanItemResponse",
+    "AssessmentBase",
+    "AssessmentCreate",
+    "AssessmentResponse",
+    "AssessmentStartResponse",
+    "QuestionForTest",
+    "OptionForTest",
+    "AssessmentSubmitRequest",
+    "AssessmentResultResponse",
+    "TopicPerformance",
 ]

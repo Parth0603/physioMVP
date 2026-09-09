@@ -8,6 +8,8 @@ from app.repositories.domain import (
     question_repo,
     progress_repo,
     study_plan_repo,
+    assessment_repo,
+    attempt_repo,
 )
 
 __all__ = [
@@ -20,4 +22,6 @@ __all__ = [
     "question_repo",
     "progress_repo",
     "study_plan_repo",
+    "assessment_repo",
+    "attempt_repo",
 ]

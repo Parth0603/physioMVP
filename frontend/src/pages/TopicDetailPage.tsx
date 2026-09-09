@@ -176,7 +176,7 @@ export const TopicDetailPage: React.FC = () => {
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-teal-50 text-teal-700">
-                    {content.content_type.replace('_', ' ')}
+                    {(content.content_type || 'content').replace(/_/g, ' ')}
                   </span>
                   <h3 className="text-base font-bold text-slate-900">{content.title}</h3>
                 </div>

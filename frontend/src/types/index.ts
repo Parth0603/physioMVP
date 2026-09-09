@@ -130,3 +130,138 @@ export interface ProgressSummary {
   average_mastery: number;
   total_attempts: number;
 }
+
+export interface SubjectProgressSummary {
+  subject_id: number;
+  subject_name: string;
+  total_topics: number;
+  average_mastery: number;
+  strong_count: number;
+  moderate_count: number;
+  needs_improvement_count: number;
+  weak_count: number;
+  unattempted_count: number;
+}
+
+export interface AssessmentOptionMasked {
+  id: number;
+  option_text: string;
+}
+
+export interface AssessmentQuestionMasked {
+  id: number;
+  topic_id: number;
+  topic_name?: string;
+  question_text: string;
+  question_type: string;
+  difficulty_level: DifficultyLevel;
+  options: AssessmentOptionMasked[];
+}
+
+export interface Assessment {
+  id: number;
+  title: string;
+  type: string;
+  subject_id: number;
+  description?: string;
+  duration_minutes: number;
+  status: string;
+  created_at: string;
+  question_count?: number;
+}
+
+export interface AssessmentStartResponse {
+  assessment_id: number;
+  title: string;
+  duration_minutes: number;
+  total_questions: number;
+  questions: AssessmentQuestionMasked[];
+}
+
+export interface AnswerSubmission {
+  question_id: number;
+  answer: string;
+  time_taken_seconds: number;
+}
+
+export interface AssessmentSubmitPayload {
+  answers: AnswerSubmission[];
+}
+
+export interface TopicPerformanceResult {
+  topic_id: number;
+  topic_name: string;
+  total_questions: number;
+  correct_count: number;
+  accuracy: number;
+  prior_mastery: number;
+  updated_mastery: number;
+  mastery_status: string;
+  priority_level: number;
+  priority_label: string;
+}
+
+export interface AssessmentResultResponse {
+  assessment_id: number;
+  title: string;
+  total_questions: number;
+  correct_answers: number;
+  incorrect_answers: number;
+  accuracy: number;
+  total_time_seconds: number;
+  topic_breakdown: TopicPerformanceResult[];
+  strong_areas: string[];
+  weak_areas: string[];
+  recommended_focus: string[];
+  study_plan_generated: boolean;
+}
+
+export interface LearningGapItem {
+  topic_id: number;
+  topic_name: string;
+  subject_name: string;
+  mastery_score: number;
+  band_label: string;
+  priority_level: number;
+  priority_label: string;
+  attempts: number;
+  accuracy: number;
+  last_attempt_at?: string;
+}
+
+export interface RevisionDueItem {
+  topic_id: number;
+  topic_name: string;
+  subject_name: string;
+  mastery_score: number;
+  next_review_at: string;
+  is_overdue: boolean;
+  priority_label: string;
+}
+
+export interface StudyPlanItem {
+  id: number;
+  study_plan_id: number;
+  topic_id: number;
+  topic?: {
+    id: number;
+    name: string;
+  };
+  topic_name?: string;
+  content_type?: string;
+  task_type?: string;
+  priority: number;
+  estimated_minutes: number;
+  status: string;
+  completed_at?: string;
+}
+
+export interface StudyPlan {
+  id: number;
+  student_id: number;
+  title: string;
+  target_date: string;
+  status: string;
+  items: StudyPlanItem[];
+}
+

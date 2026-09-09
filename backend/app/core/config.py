@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     # Database: Supports PostgreSQL by default, with automatic graceful SQLite fallback if local PG credentials are unset
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "sqlite:///./physiosmart.db",
+        f"sqlite:///{os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'physiosmart.db')).replace(chr(92), '/')}",
     )
 
     # JWT Authentication

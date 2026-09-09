@@ -11,6 +11,7 @@ class Attempt(Base):
     id = Column(Integer, primary_key=True, index=True)
     student_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     question_id = Column(Integer, ForeignKey("questions.id", ondelete="CASCADE"), nullable=False, index=True)
+    assessment_id = Column(Integer, ForeignKey("assessments.id", ondelete="SET NULL"), nullable=True, index=True)
     answer = Column(Text, nullable=False)
     is_correct = Column(Boolean, nullable=False)
     time_taken = Column(Integer, default=0, nullable=False)  # Time taken in seconds
@@ -19,3 +20,4 @@ class Attempt(Base):
     # Relationships
     student = relationship("User", back_populates="attempts")
     question = relationship("Question", back_populates="attempts")
+    assessment = relationship("Assessment", back_populates="attempts")

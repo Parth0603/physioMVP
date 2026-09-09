@@ -28,6 +28,17 @@ def get_progress_summary(
 
 
 @router.get(
+    "/subjects",
+    summary="Get subject-level mastery and topic distribution summaries",
+)
+def get_subject_summaries(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return progress_service.get_subject_summaries(db, current_user.id)
+
+
+@router.get(
     "/",
     response_model=List[StudentProgressResponse],
     summary="Get all topic progress records for current student",

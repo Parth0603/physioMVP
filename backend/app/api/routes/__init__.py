@@ -9,6 +9,8 @@ from app.api.routes import (
     questions,
     progress,
     study_plans,
+    assessments,
+    adaptive,
     ai,
 )
 
@@ -23,4 +25,6 @@ api_router.include_router(content.router)
 api_router.include_router(questions.router)
 api_router.include_router(progress.router)
 api_router.include_router(study_plans.router)
+api_router.include_router(assessments.router)
+api_router.include_router(adaptive.router)
 api_router.include_router(ai.router)

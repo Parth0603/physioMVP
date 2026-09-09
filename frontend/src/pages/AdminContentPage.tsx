@@ -251,7 +251,7 @@ export const AdminContentPage: React.FC = () => {
                 <div className="space-y-1 max-w-3xl">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                      {item.content_type.replace('_', ' ')}
+                      {(item.content_type || 'content').replace(/_/g, ' ')}
                     </span>
                     <h4 className="text-sm font-bold text-slate-900">{item.title}</h4>
                   </div>

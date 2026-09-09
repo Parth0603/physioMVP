@@ -15,11 +15,15 @@ import { SubjectDetailPage } from './pages/SubjectDetailPage';
 import { TopicDetailPage } from './pages/TopicDetailPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { AssessmentsPage } from './pages/AssessmentsPage';
+import { AssessmentRunnerPage } from './pages/AssessmentRunnerPage';
+import { AssessmentResultPage } from './pages/AssessmentResultPage';
 
 // Admin Pages
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminSubjectsPage } from './pages/AdminSubjectsPage';
 import { AdminContentPage } from './pages/AdminContentPage';
+import { AdminQuestionsPage } from './pages/AdminQuestionsPage';
 
 // Faculty Pages
 import { FacultyDashboard } from './pages/FacultyDashboard';
@@ -50,6 +54,9 @@ export const App: React.FC = () => {
             <Route path="subjects" element={<SubjectsPage />} />
             <Route path="subjects/:subjectId" element={<SubjectDetailPage />} />
             <Route path="topics/:topicId" element={<TopicDetailPage />} />
+            <Route path="assessments" element={<AssessmentsPage />} />
+            <Route path="assessments/:id" element={<AssessmentRunnerPage />} />
+            <Route path="assessments/:id/result" element={<AssessmentResultPage />} />
             <Route path="progress" element={<ProgressPage />} />
             <Route path="profile" element={<ProfilePage />} />
 
@@ -85,6 +92,14 @@ export const App: React.FC = () => {
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminContentPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="admin/questions"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminQuestionsPage />
                 </ProtectedRoute>
               }
             />
