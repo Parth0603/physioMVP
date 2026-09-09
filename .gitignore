@@ -52,3 +52,6 @@ Thumbs.db
 # Database
 *.sqlite
 *.db
+
+# Local Netlify folder
+.netlify
