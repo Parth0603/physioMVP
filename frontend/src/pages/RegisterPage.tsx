@@ -142,9 +142,9 @@ export const RegisterPage: React.FC = () => {
 
         {/* Multi-step Stepper Indicator */}
         <div className="flex items-center justify-between mb-6 px-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <span
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+              className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                 step === 1
                   ? 'bg-[#0d3834] text-white shadow-sm'
                   : 'bg-emerald-100 text-emerald-800'
@@ -152,12 +152,12 @@ export const RegisterPage: React.FC = () => {
             >
               {step > 1 ? <CheckCircle className="w-4 h-4" /> : '1'}
             </span>
-            <span className="text-xs font-bold text-slate-700">Account Credentials</span>
+            <span className="text-[11px] sm:text-xs font-bold text-slate-700 truncate">Account Details</span>
           </div>
-          <div className="flex-1 h-0.5 mx-3 bg-slate-200" />
-          <div className="flex items-center gap-2">
+          <div className="flex-1 h-0.5 mx-2 sm:mx-3 bg-slate-200" />
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <span
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+              className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                 step === 2
                   ? 'bg-[#0d3834] text-white shadow-sm'
                   : 'bg-slate-200 text-slate-500'
@@ -166,11 +166,11 @@ export const RegisterPage: React.FC = () => {
               2
             </span>
             <span
-              className={`text-xs font-bold ${
+              className={`text-[11px] sm:text-xs font-bold truncate ${
                 step === 2 ? 'text-slate-800' : 'text-slate-400'
               }`}
             >
-              {role === 'student' ? 'Student Profile' : role === 'faculty' ? 'Faculty Profile' : 'Admin Profile'}
+              {role === 'student' ? 'Student Info' : role === 'faculty' ? 'Faculty Info' : 'Admin Info'}
             </span>
           </div>
         </div>

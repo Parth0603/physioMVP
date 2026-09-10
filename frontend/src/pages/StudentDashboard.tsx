@@ -253,46 +253,46 @@ export const StudentDashboard: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Student Welcome Header */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-5 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6 shadow-sm">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#edf7f6] border border-[#b0dcd5] text-[#0d3834] text-xs font-semibold mb-3">
             <span>
               BPT Year {profile?.academic_year || 1} • Semester {profile?.semester || 1}
             </span>
           </div>
-          <h2 className="text-2xl font-bold text-[#0d3834] tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#0d3834] tracking-tight">
             Welcome back, {user?.name}
           </h2>
-          <p className="text-sm text-slate-500 mt-1 max-w-xl">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl">
             {profile?.institution || 'Apex Institute of Physiotherapy & Allied Sciences'}
           </p>
         </div>
 
         {/* Quick Stats Pill */}
-        <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-          <div className="text-center px-3">
-            <span className="block text-2xl font-bold text-[#0d3834]">
+        <div className="flex items-center justify-around sm:justify-center gap-2 sm:gap-4 bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-200 w-full sm:w-auto">
+          <div className="text-center px-2 sm:px-3">
+            <span className="block text-xl sm:text-2xl font-bold text-[#0d3834]">
               {summary?.average_mastery ? Math.round(summary.average_mastery) : 0}%
             </span>
-            <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] sm:text-[11px] font-medium text-slate-500 uppercase tracking-wider">
               Avg Mastery
             </span>
           </div>
           <div className="w-px h-8 bg-slate-200"></div>
-          <div className="text-center px-3">
-            <span className="block text-2xl font-bold text-[#14b8a6]">
+          <div className="text-center px-2 sm:px-3">
+            <span className="block text-xl sm:text-2xl font-bold text-[#14b8a6]">
               {summary?.total_attempts || 0}
             </span>
-            <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] sm:text-[11px] font-medium text-slate-500 uppercase tracking-wider">
               Attempts
             </span>
           </div>
           <div className="w-px h-8 bg-slate-200"></div>
-          <div className="text-center px-3">
-            <span className="block text-2xl font-bold text-[#0d9488]">
+          <div className="text-center px-2 sm:px-3">
+            <span className="block text-xl sm:text-2xl font-bold text-[#0d9488]">
               {summary?.mastered_topics || 0}
             </span>
-            <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
+            <span className="text-[10px] sm:text-[11px] font-medium text-slate-500 uppercase tracking-wider">
               Mastered
             </span>
           </div>
