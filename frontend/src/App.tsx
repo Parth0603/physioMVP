@@ -42,13 +42,15 @@ export const App: React.FC = () => {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Default Entrypoint redirects to Login Page */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
           {/* Public Authentication Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
           {/* Authenticated Workspace */}
           <Route
-            path="/"
             element={
               <ProtectedRoute>
                 <ErrorBoundary>
@@ -57,11 +59,8 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           >
-            {/* Default redirect to dashboard */}
-            <Route index element={<Navigate to="/dashboard" replace />} />
-
             {/* Student Endpoints */}
-            <Route path="dashboard" element={<StudentDashboard />} />
+            <Route path="/dashboard" element={<StudentDashboard />} />
             <Route path="subjects" element={<SubjectsPage />} />
             <Route path="subjects/:subjectId" element={<SubjectDetailPage />} />
             <Route path="topics/:topicId" element={<TopicDetailPage />} />

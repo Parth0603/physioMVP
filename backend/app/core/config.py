@@ -7,6 +7,27 @@ from pydantic_settings import BaseSettings
 logger = logging.getLogger(__name__)
 
 
+def _get_default_database_url() -> str:
+    env_url = os.getenv("DATABASE_URL")
+    if env_url:
+        return env_url
+
+    is_serverless = os.getenv("VERCEL") == "1" or bool(os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+    if is_serverless:
+        tmp_db = "/tmp/physiosmart.db"
+        seed_db = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "db", "seed.db"))
+        try:
+            if not os.path.exists(tmp_db) and os.path.exists(seed_db):
+                import shutil
+                shutil.copyfile(seed_db, tmp_db)
+        except Exception as e:
+            logger.error(f"Failed to copy seed db to /tmp: {e}")
+        return f"sqlite:///{tmp_db}"
+
+    local_db = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "physiosmart.db")).replace(chr(92), "/")
+    return f"sqlite:///{local_db}"
+
+
 class Settings(BaseSettings):
     APP_NAME: str = "PHYSIO-SMART"
     APP_ENV: str = "development"
@@ -20,11 +41,8 @@ class Settings(BaseSettings):
         "http://localhost:3000",
     ]
 
-    # Database: Supports PostgreSQL by default, with automatic graceful SQLite fallback if local PG credentials are unset
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        f"sqlite:///{os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'physiosmart.db')).replace(chr(92), '/')}",
-    )
+    # Database: Supports PostgreSQL by default, with automatic graceful SQLite fallback
+    DATABASE_URL: str = _get_default_database_url()
 
     # JWT Authentication
     JWT_SECRET_KEY: str = os.getenv(
