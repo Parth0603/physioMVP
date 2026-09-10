@@ -140,28 +140,31 @@ export const MainLayout: React.FC = () => {
       {/* ========================================================================= */}
       {/* MOBILE STICKY TOP NAVIGATION BAR (< md) */}
       {/* ========================================================================= */}
-      <header className="md:hidden sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 h-15 sm:h-16 flex items-center justify-between shrink-0 shadow-xs">
+      <header className="md:hidden sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-slate-200/80 px-5 sm:px-6 h-20 flex items-center justify-between shrink-0 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
         {/* Brand */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#0d3834] flex items-center justify-center text-[#2dd4bf] font-bold shadow-xs">
-            <GraduationCap className="w-4 h-4" />
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#0d3834] to-[#155952] flex items-center justify-center text-[#2dd4bf] font-bold shadow-md shadow-[#0d3834]/15 ring-1 ring-white/50">
+            <GraduationCap className="w-5 h-5" />
           </div>
-          <div>
-            <span className="font-bold text-[#0d3834] tracking-tight text-base sm:text-lg">
+          <div className="flex flex-col">
+            <span className="font-black text-[#0d3834] tracking-tight text-lg leading-tight">
               PHYSIO<span className="text-[#14b8a6] font-extrabold">-SMART</span>
+            </span>
+            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mt-0.5">
+              BPT Adaptive Platform
             </span>
           </div>
         </div>
 
-        {/* Right side: Role badge & Mobile menu toggle button */}
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#edf7f6] text-[#0d3834] border border-[#b0dcd5] capitalize">
+        {/* Right side: Role pill & Mobile menu toggle button */}
+        <div className="flex items-center gap-2.5">
+          <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#edf7f6]/90 text-[#0d3834] border border-[#b0dcd5] capitalize shadow-2xs">
             {user?.role}
           </span>
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-95 transition-all focus:outline-none"
+            className="w-11 h-11 rounded-2xl bg-slate-100/90 hover:bg-slate-200/90 text-slate-800 flex items-center justify-center active:scale-95 transition-all shadow-2xs border border-slate-200/60 focus:outline-none"
             aria-label={mobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
           >
             {mobileMenuOpen ? <X className="w-5 h-5 text-slate-800" /> : <Menu className="w-5 h-5 text-slate-800" />}
@@ -176,7 +179,7 @@ export const MainLayout: React.FC = () => {
         <div className="fixed inset-0 z-50 md:hidden flex">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity duration-300"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity duration-300"
             onClick={() => setMobileMenuOpen(false)}
             aria-hidden="true"
           />
@@ -184,24 +187,24 @@ export const MainLayout: React.FC = () => {
           {/* Drawer container */}
           <div className="relative w-4/5 max-w-xs bg-white shadow-2xl flex flex-col h-full z-10 animate-in slide-in-from-left duration-200">
             {/* Drawer Header */}
-            <div className="h-16 px-5 border-b border-slate-200 flex items-center justify-between shrink-0 bg-white">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[#0d3834] flex items-center justify-center text-[#2dd4bf] font-bold shadow-xs">
-                  <GraduationCap className="w-4 h-4" />
+            <div className="h-20 px-5 border-b border-slate-200 flex items-center justify-between shrink-0 bg-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0d3834] to-[#155952] flex items-center justify-center text-[#2dd4bf] font-bold shadow-md shadow-[#0d3834]/15">
+                  <GraduationCap className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="font-bold text-[#0d3834] tracking-tight text-base">
+                  <span className="font-black text-[#0d3834] tracking-tight text-base leading-tight">
                     PHYSIO<span className="text-[#14b8a6] font-extrabold">-SMART</span>
                   </span>
-                  <span className="block text-[9px] uppercase tracking-wider font-semibold text-slate-400">
-                    BPT Adaptive Platform
+                  <span className="block text-[9px] uppercase tracking-wider font-semibold text-slate-400 mt-0.5">
+                    Adaptive Workspace
                   </span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                className="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors"
                 aria-label="Close menu"
               >
                 <X className="w-5 h-5" />
@@ -214,7 +217,7 @@ export const MainLayout: React.FC = () => {
             </nav>
 
             {/* Drawer Footer with User details & Logout */}
-            <div className="shrink-0 p-4 border-t border-slate-200 bg-slate-50">
+            <div className="shrink-0 p-4 border-t border-slate-200 bg-slate-50/80">
               <div className="flex items-center justify-between gap-2">
                 <NavLink
                   to="/profile"
@@ -339,184 +342,213 @@ export const MainLayout: React.FC = () => {
           </div>
         </header>
 
-        {/* Page Viewport - Optimized padding for Mobile, Tablet, and Desktop */}
-        <main className="flex-1 p-3.5 sm:p-6 md:p-8 pb-24 md:pb-8 overflow-y-auto max-w-7xl w-full mx-auto">
+        {/* Page Viewport - Generous bottom padding to clear floating island pill */}
+        <main className="flex-1 p-4 sm:p-6 md:p-8 pb-28 sm:pb-32 md:pb-8 overflow-y-auto max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
 
         {/* ========================================================================= */}
-        {/* MOBILE BOTTOM NAVIGATION BAR (< md) */}
+        {/* MOBILE FLOATING ISLAND PILL NAVBAR (< md) */}
+        {/* iOS-Style Glassy Floating Island Pill */}
         {/* ========================================================================= */}
-        <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-30 px-2 py-1.5 flex items-center justify-around shadow-lg">
-          {isStudent && (
-            <>
-              <NavLink
-                to="/dashboard"
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-[#0d3834] font-bold' : 'text-slate-500 hover:text-slate-800'
-                  }`
-                }
-              >
-                <LayoutDashboard className="w-5 h-5 mb-0.5" />
-                <span>Dashboard</span>
-              </NavLink>
+        <div className="md:hidden fixed bottom-4 inset-x-0 z-40 flex justify-center px-4 pointer-events-none">
+          <nav className="pointer-events-auto w-full max-w-sm bg-white/85 backdrop-blur-xl border border-white/60 shadow-[0_12px_36px_rgba(0,0,0,0.12),0_4px_12px_rgba(0,0,0,0.06)] rounded-full px-2 py-1.5 flex items-center justify-around ring-1 ring-black/[0.04]">
+            {isStudent && (
+              <>
+                <NavLink
+                  to="/dashboard"
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center py-1.5 px-3 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#0d3834] text-white shadow-xs font-bold scale-102'
+                        : 'text-slate-500 hover:text-slate-900 font-medium'
+                    }`
+                  }
+                >
+                  <LayoutDashboard className="w-4 h-4 mb-0.5" />
+                  <span className="text-[10px] leading-tight">Dashboard</span>
+                </NavLink>
 
-              <NavLink
-                to="/subjects"
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-[#0d3834] font-bold' : 'text-slate-500 hover:text-slate-800'
-                  }`
-                }
-              >
-                <BookOpen className="w-5 h-5 mb-0.5" />
-                <span>Subjects</span>
-              </NavLink>
+                <NavLink
+                  to="/subjects"
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center py-1.5 px-3 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#0d3834] text-white shadow-xs font-bold scale-102'
+                        : 'text-slate-500 hover:text-slate-900 font-medium'
+                    }`
+                  }
+                >
+                  <BookOpen className="w-4 h-4 mb-0.5" />
+                  <span className="text-[10px] leading-tight">Subjects</span>
+                </NavLink>
 
-              <NavLink
-                to="/assessments"
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-[#0d3834] font-bold' : 'text-slate-500 hover:text-slate-800'
-                  }`
-                }
-              >
-                <FileCheck className="w-5 h-5 mb-0.5" />
-                <span>Tests</span>
-              </NavLink>
+                <NavLink
+                  to="/assessments"
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center py-1.5 px-3 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#0d3834] text-white shadow-xs font-bold scale-102'
+                        : 'text-slate-500 hover:text-slate-900 font-medium'
+                    }`
+                  }
+                >
+                  <FileCheck className="w-4 h-4 mb-0.5" />
+                  <span className="text-[10px] leading-tight">Tests</span>
+                </NavLink>
 
-              <NavLink
-                to="/practice"
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-[#0d3834] font-bold' : 'text-slate-500 hover:text-slate-800'
-                  }`
-                }
-              >
-                <Stethoscope className="w-5 h-5 mb-0.5" />
-                <span>Practice</span>
-              </NavLink>
+                <NavLink
+                  to="/practice"
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center py-1.5 px-3 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#0d3834] text-white shadow-xs font-bold scale-102'
+                        : 'text-slate-500 hover:text-slate-900 font-medium'
+                    }`
+                  }
+                >
+                  <Stethoscope className="w-4 h-4 mb-0.5" />
+                  <span className="text-[10px] leading-tight">Practice</span>
+                </NavLink>
 
-              <NavLink
-                to="/profile"
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-[#0d3834] font-bold' : 'text-slate-500 hover:text-slate-800'
-                  }`
-                }
-              >
-                <UserIcon className="w-5 h-5 mb-0.5" />
-                <span>Profile</span>
-              </NavLink>
-            </>
-          )}
+                <NavLink
+                  to="/profile"
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center py-1.5 px-3 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#0d3834] text-white shadow-xs font-bold scale-102'
+                        : 'text-slate-500 hover:text-slate-900 font-medium'
+                    }`
+                  }
+                >
+                  <UserIcon className="w-4 h-4 mb-0.5" />
+                  <span className="text-[10px] leading-tight">Profile</span>
+                </NavLink>
+              </>
+            )}
 
-          {isFaculty && (
-            <>
-              <NavLink
-                to="/faculty"
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 py-1 px-2 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-[#0d3834] font-bold' : 'text-slate-500 hover:text-slate-800'
-                  }`
-                }
-              >
-                <FileCheck className="w-5 h-5 mb-0.5" />
-                <span>Verification</span>
-              </NavLink>
+            {isFaculty && (
+              <>
+                <NavLink
+                  to="/faculty"
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center py-1.5 px-4 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#0d3834] text-white shadow-xs font-bold scale-102'
+                        : 'text-slate-500 hover:text-slate-900 font-medium'
+                    }`
+                  }
+                >
+                  <FileCheck className="w-4 h-4 mb-0.5" />
+                  <span className="text-[10px] leading-tight">Verification</span>
+                </NavLink>
 
-              <NavLink
-                to="/subjects"
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 py-1 px-2 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-[#0d3834] font-bold' : 'text-slate-500 hover:text-slate-800'
-                  }`
-                }
-              >
-                <BookOpen className="w-5 h-5 mb-0.5" />
-                <span>Curriculum</span>
-              </NavLink>
+                <NavLink
+                  to="/subjects"
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center py-1.5 px-4 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#0d3834] text-white shadow-xs font-bold scale-102'
+                        : 'text-slate-500 hover:text-slate-900 font-medium'
+                    }`
+                  }
+                >
+                  <BookOpen className="w-4 h-4 mb-0.5" />
+                  <span className="text-[10px] leading-tight">Curriculum</span>
+                </NavLink>
 
-              <NavLink
-                to="/profile"
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 py-1 px-2 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-[#0d3834] font-bold' : 'text-slate-500 hover:text-slate-800'
-                  }`
-                }
-              >
-                <UserIcon className="w-5 h-5 mb-0.5" />
-                <span>Profile</span>
-              </NavLink>
-            </>
-          )}
+                <NavLink
+                  to="/profile"
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center py-1.5 px-4 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#0d3834] text-white shadow-xs font-bold scale-102'
+                        : 'text-slate-500 hover:text-slate-900 font-medium'
+                    }`
+                  }
+                >
+                  <UserIcon className="w-4 h-4 mb-0.5" />
+                  <span className="text-[10px] leading-tight">Profile</span>
+                </NavLink>
+              </>
+            )}
 
-          {isAdmin && (
-            <>
-              <NavLink
-                to="/admin"
-                end
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-[#0d3834] font-bold' : 'text-slate-500 hover:text-slate-800'
-                  }`
-                }
-              >
-                <Shield className="w-5 h-5 mb-0.5" />
-                <span>Console</span>
-              </NavLink>
+            {isAdmin && (
+              <>
+                <NavLink
+                  to="/admin"
+                  end
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center py-1.5 px-3 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#0d3834] text-white shadow-xs font-bold scale-102'
+                        : 'text-slate-500 hover:text-slate-900 font-medium'
+                    }`
+                  }
+                >
+                  <Shield className="w-4 h-4 mb-0.5" />
+                  <span className="text-[10px] leading-tight">Console</span>
+                </NavLink>
 
-              <NavLink
-                to="/admin/subjects"
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-[#0d3834] font-bold' : 'text-slate-500 hover:text-slate-800'
-                  }`
-                }
-              >
-                <Layers className="w-5 h-5 mb-0.5" />
-                <span>Curriculum</span>
-              </NavLink>
+                <NavLink
+                  to="/admin/subjects"
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center py-1.5 px-3 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#0d3834] text-white shadow-xs font-bold scale-102'
+                        : 'text-slate-500 hover:text-slate-900 font-medium'
+                    }`
+                  }
+                >
+                  <Layers className="w-4 h-4 mb-0.5" />
+                  <span className="text-[10px] leading-tight">Curriculum</span>
+                </NavLink>
 
-              <NavLink
-                to="/admin/content"
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-[#0d3834] font-bold' : 'text-slate-500 hover:text-slate-800'
-                  }`
-                }
-              >
-                <BookOpen className="w-5 h-5 mb-0.5" />
-                <span>CMS</span>
-              </NavLink>
+                <NavLink
+                  to="/admin/content"
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center py-1.5 px-3 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#0d3834] text-white shadow-xs font-bold scale-102'
+                        : 'text-slate-500 hover:text-slate-900 font-medium'
+                    }`
+                  }
+                >
+                  <BookOpen className="w-4 h-4 mb-0.5" />
+                  <span className="text-[10px] leading-tight">CMS</span>
+                </NavLink>
 
-              <NavLink
-                to="/admin/questions"
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-[#0d3834] font-bold' : 'text-slate-500 hover:text-slate-800'
-                  }`
-                }
-              >
-                <FileCheck className="w-5 h-5 mb-0.5" />
-                <span>Questions</span>
-              </NavLink>
+                <NavLink
+                  to="/admin/questions"
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center py-1.5 px-3 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#0d3834] text-white shadow-xs font-bold scale-102'
+                        : 'text-slate-500 hover:text-slate-900 font-medium'
+                    }`
+                  }
+                >
+                  <FileCheck className="w-4 h-4 mb-0.5" />
+                  <span className="text-[10px] leading-tight">Questions</span>
+                </NavLink>
 
-              <NavLink
-                to="/profile"
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-lg text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-[#0d3834] font-bold' : 'text-slate-500 hover:text-slate-800'
-                  }`
-                }
-              >
-                <UserIcon className="w-5 h-5 mb-0.5" />
-                <span>Profile</span>
-              </NavLink>
-            </>
-          )}
-        </nav>
+                <NavLink
+                  to="/profile"
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center py-1.5 px-3 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? 'bg-[#0d3834] text-white shadow-xs font-bold scale-102'
+                        : 'text-slate-500 hover:text-slate-900 font-medium'
+                    }`
+                  }
+                >
+                  <UserIcon className="w-4 h-4 mb-0.5" />
+                  <span className="text-[10px] leading-tight">Profile</span>
+                </NavLink>
+              </>
+            )}
+          </nav>
+        </div>
       </div>
     </div>
   );
