@@ -37,7 +37,15 @@ def _ensure_db_ready():
     try:
         import os
         import shutil
-        is_serverless = os.getenv("VERCEL") == "1" or bool(os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+        root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+        is_serverless = (
+            bool(os.getenv("VERCEL"))
+            or bool(os.getenv("VERCEL_ENV"))
+            or bool(os.getenv("VERCEL_REGION"))
+            or bool(os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+            or bool(os.getenv("LAMBDA_TASK_ROOT"))
+            or not os.access(root_dir, os.W_OK)
+        )
         if is_serverless:
             tmp_db = "/tmp/physiosmart.db"
             seed_db = os.path.abspath(os.path.join(os.path.dirname(__file__), "seed.db"))

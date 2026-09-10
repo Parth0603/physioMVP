@@ -12,7 +12,15 @@ def _get_default_database_url() -> str:
     if env_url:
         return env_url
 
-    is_serverless = os.getenv("VERCEL") == "1" or bool(os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    is_serverless = (
+        bool(os.getenv("VERCEL"))
+        or bool(os.getenv("VERCEL_ENV"))
+        or bool(os.getenv("VERCEL_REGION"))
+        or bool(os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+        or bool(os.getenv("LAMBDA_TASK_ROOT"))
+        or not os.access(root_dir, os.W_OK)
+    )
     if is_serverless:
         tmp_db = "/tmp/physiosmart.db"
         seed_db = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "db", "seed.db"))
@@ -24,7 +32,7 @@ def _get_default_database_url() -> str:
             logger.error(f"Failed to copy seed db to /tmp: {e}")
         return f"sqlite:///{tmp_db}"
 
-    local_db = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "physiosmart.db")).replace(chr(92), "/")
+    local_db = os.path.abspath(os.path.join(root_dir, "physiosmart.db")).replace(chr(92), "/")
     return f"sqlite:///{local_db}"
 
 
