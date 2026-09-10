@@ -70,12 +70,12 @@ export const SubjectDetailPage: React.FC = () => {
       <div className="space-y-6">
         <h3 className="text-base font-bold text-slate-900">Syllabus Units & Topics</h3>
 
-        {subject.units.length === 0 ? (
+        {(!subject.units || subject.units.length === 0) ? (
           <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-xs text-slate-400">
             No units added to this subject yet.
           </div>
         ) : (
-          subject.units.map((unit) => (
+          (subject.units || []).map((unit) => (
             <div key={unit.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
               <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                 <div>
@@ -83,13 +83,13 @@ export const SubjectDetailPage: React.FC = () => {
                   {unit.description && <p className="text-xs text-slate-500 mt-0.5">{unit.description}</p>}
                 </div>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-600">
-                  {unit.topics.length} Topics
+                  {unit.topics?.length || 0} Topics
                 </span>
               </div>
 
               {/* Topics inside unit */}
               <div className="divide-y divide-slate-100">
-                {unit.topics.length === 0 ? (
+                {(!unit.topics || unit.topics.length === 0) ? (
                   <p className="p-4 text-xs text-slate-400 italic">No topics under this unit yet.</p>
                 ) : (
                   unit.topics.map((topic) => (

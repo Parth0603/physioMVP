@@ -29,7 +29,16 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     role: UserRole = UserRole.STUDENT
-    institution: Optional[str] = "Default Physiotherapy College"
+    institution: Optional[str] = "Apex Institute of Physiotherapy & Allied Sciences"
+    # Student specific fields
     course: Optional[str] = "Bachelor of Physiotherapy (BPT)"
     academic_year: Optional[int] = 1
     semester: Optional[int] = 1
+    enrollment_id: Optional[str] = None
+    # Faculty specific fields
+    department: Optional[str] = None
+    designation: Optional[str] = None
+    subjects_taught: Optional[str] = None
+    faculty_id_number: Optional[str] = None
+    # Admin specific fields
+    employee_id: Optional[str] = None

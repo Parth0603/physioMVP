@@ -7,6 +7,30 @@ export interface StudentProfile {
   course: string;
   academic_year: number;
   semester: number;
+  enrollment_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FacultyProfile {
+  id: number;
+  user_id: number;
+  institution: string;
+  department: string;
+  designation: string;
+  subjects_taught?: string;
+  faculty_id_number?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminProfile {
+  id: number;
+  user_id: number;
+  institution: string;
+  department: string;
+  designation: string;
+  employee_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -20,6 +44,22 @@ export interface User {
   created_at: string;
   updated_at: string;
   student_profile?: StudentProfile;
+  faculty_profile?: FacultyProfile;
+  admin_profile?: AdminProfile;
+}
+
+export interface ProfileUpdateRequest {
+  name?: string;
+  institution?: string;
+  course?: string;
+  academic_year?: number;
+  semester?: number;
+  enrollment_id?: string;
+  department?: string;
+  designation?: string;
+  subjects_taught?: string;
+  faculty_id_number?: string;
+  employee_id?: string;
 }
 
 export interface AuthResponse {

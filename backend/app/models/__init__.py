@@ -16,6 +16,8 @@ __all__ = [
     "User",
     "UserRole",
     "StudentProfile",
+    "FacultyProfile",
+    "AdminProfile",
     "Subject",
     "Unit",
     "Topic",

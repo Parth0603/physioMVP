@@ -191,13 +191,13 @@ export const AssessmentRunnerPage: React.FC = () => {
             </span>
             <span>
               {answeredCount} of {totalQuestions} Answered (
-              {Math.round((answeredCount / totalQuestions) * 100)}%)
+              {totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0}%)
             </span>
           </div>
           <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
             <div
               className="bg-[#14b8a6] h-2.5 rounded-full transition-all duration-300"
-              style={{ width: `${((currentIndex + 1) / totalQuestions) * 100}%` }}
+              style={{ width: `${totalQuestions > 0 ? ((currentIndex + 1) / totalQuestions) * 100 : 0}%` }}
             />
           </div>
         </div>

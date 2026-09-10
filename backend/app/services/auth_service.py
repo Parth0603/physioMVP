@@ -8,6 +8,8 @@ from app.core.exceptions import (
 )
 from app.models.user import User, UserRole
 from app.models.student_profile import StudentProfile
+from app.models.faculty_profile import FacultyProfile
+from app.models.admin_profile import AdminProfile
 from app.schemas.auth import RegisterRequest, LoginRequest, Token
 from app.repositories.domain import user_repo
 
@@ -31,16 +33,38 @@ class AuthService:
         }
         user = user_repo.create(db, user_data)
 
-        # Create student profile if role is student
+        # Create role-specific profile based on selected role
         if req.role == UserRole.STUDENT:
             profile = StudentProfile(
                 user_id=user.id,
-                institution=req.institution or "Default Physiotherapy College",
+                institution=req.institution or "Apex Institute of Physiotherapy & Allied Sciences",
                 course=req.course or "Bachelor of Physiotherapy (BPT)",
                 academic_year=req.academic_year or 1,
                 semester=req.semester or 1,
+                enrollment_id=req.enrollment_id or f"BPT-{user.id:04d}",
             )
             db.add(profile)
+            db.commit()
+        elif req.role == UserRole.FACULTY:
+            f_profile = FacultyProfile(
+                user_id=user.id,
+                institution=req.institution or "Apex Institute of Physiotherapy & Allied Sciences",
+                department=req.department or "Musculoskeletal & Orthopedics",
+                designation=req.designation or "Assistant Professor",
+                subjects_taught=req.subjects_taught or "Biomechanics & Kinesiology, Orthopedics",
+                faculty_id_number=req.faculty_id_number or f"FAC-{user.id:03d}",
+            )
+            db.add(f_profile)
+            db.commit()
+        elif req.role == UserRole.ADMIN:
+            a_profile = AdminProfile(
+                user_id=user.id,
+                institution=req.institution or "Apex Institute of Physiotherapy & Allied Sciences",
+                department=req.department or "Academic Affairs & Examination Council",
+                designation=req.designation or "Academic Administrator",
+                employee_id=req.employee_id or f"ADM-{user.id:03d}",
+            )
+            db.add(a_profile)
             db.commit()
 
         # Generate JWT token

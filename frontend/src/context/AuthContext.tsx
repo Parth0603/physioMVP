@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, UserRole, AuthResponse } from '../types';
+import { User, UserRole, AuthResponse, ProfileUpdateRequest } from '../types';
 import { authService } from '../services/authService';
 
 interface AuthContextType {
@@ -9,6 +9,8 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<AuthResponse>;
   register: (payload: any) => Promise<AuthResponse>;
+  updateProfile: (data: ProfileUpdateRequest) => Promise<User>;
+  refreshUser: () => Promise<void>;
   logout: () => void;
   hasRole: (roles: UserRole[]) => boolean;
 }
@@ -20,20 +22,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (token) {
-        try {
-          const userData = await authService.getCurrentUser();
-          setUser(userData);
-        } catch (error) {
-          console.error('Failed to load current user', error);
-          logout();
-        }
+  const fetchUser = async () => {
+    if (token) {
+      try {
+        const userData = await authService.getCurrentUser();
+        setUser(userData);
+      } catch (error) {
+        console.error('Failed to load current user', error);
+        logout();
       }
-      setIsLoading(false);
-    };
+    }
+    setIsLoading(false);
+  };
 
+  useEffect(() => {
     fetchUser();
   }, [token]);
 
@@ -53,6 +55,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userData = await authService.getCurrentUser();
     setUser(userData);
     return res;
+  };
+
+  const updateProfile = async (data: ProfileUpdateRequest): Promise<User> => {
+    const updated = await authService.updateProfile(data);
+    setUser(updated);
+    return updated;
+  };
+
+  const refreshUser = async (): Promise<void> => {
+    if (token) {
+      const userData = await authService.getCurrentUser();
+      setUser(userData);
+    }
   };
 
   const logout = () => {
@@ -76,6 +91,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         login,
         register,
+        updateProfile,
+        refreshUser,
         logout,
         hasRole,
       }}

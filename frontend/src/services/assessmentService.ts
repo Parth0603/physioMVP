@@ -29,4 +29,9 @@ export const assessmentService = {
     const response = await api.post<AssessmentResultResponse>(`/assessments/${id}/submit`, payload);
     return response.data;
   },
+
+  getLatestResult: async (id: number): Promise<AssessmentResultResponse> => {
+    const response = await api.get<AssessmentResultResponse>(`/assessments/${id}/latest-result`);
+    return response.data;
+  },
 };

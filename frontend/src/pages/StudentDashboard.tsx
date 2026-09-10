@@ -42,8 +42,16 @@ export const StudentDashboard: React.FC = () => {
   const [generatingPlan, setGeneratingPlan] = useState<boolean>(false);
 
   useEffect(() => {
+    if (user?.role === 'faculty') {
+      navigate('/faculty', { replace: true });
+      return;
+    }
+    if (user?.role === 'admin') {
+      navigate('/admin', { replace: true });
+      return;
+    }
     loadDashboardData();
-  }, []);
+  }, [user]);
 
   const loadDashboardData = async () => {
     try {
@@ -507,7 +515,8 @@ export const StudentDashboard: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {subjects.map((subject) => {
-                const totalTopics = subject.units.reduce((acc, u) => acc + u.topics.length, 0);
+                const subUnits = subject.units || [];
+                const totalTopics = subUnits.reduce((acc, u) => acc + (u.topics?.length || 0), 0);
                 return (
                   <div
                     key={subject.id}
@@ -530,7 +539,7 @@ export const StudentDashboard: React.FC = () => {
 
                     <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
                       <span className="text-xs text-slate-500">
-                        <strong>{subject.units.length}</strong> Units •{' '}
+                        <strong>{subUnits.length}</strong> Units •{' '}
                         <strong>{totalTopics}</strong> Topics
                       </span>
                       <Link

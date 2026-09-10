@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import { AssessmentResultResponse } from '../types';
+import { assessmentService } from '../services/assessmentService';
 import {
   CheckCircle2,
   AlertCircle,
@@ -17,25 +18,56 @@ export const AssessmentResultPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [result] = useState<AssessmentResultResponse | null>(() => {
+  const [result, setResult] = useState<AssessmentResultResponse | null>(() => {
     if (location.state?.result) return location.state.result;
     if (id) {
       try {
         const cached = sessionStorage.getItem(`assessment_result_${id}`);
         if (cached) return JSON.parse(cached);
       } catch (e) {
-        // ignore JSON parse error
+        // ignore parse error
       }
     }
     return null;
   });
 
+  const [loading, setLoading] = useState<boolean>(!result && !!id);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!result && id) {
+      const fetchLatest = async () => {
+        try {
+          setLoading(true);
+          const data = await assessmentService.getLatestResult(parseInt(id, 10));
+          setResult(data);
+          sessionStorage.setItem(`assessment_result_${id}`, JSON.stringify(data));
+        } catch (err: any) {
+          setFetchError(err.response?.data?.detail || 'No recent result found for this assessment.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchLatest();
+    }
+  }, [id, result]);
+
+  if (loading) {
+    return (
+      <div className="max-w-xl mx-auto mt-16 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-center">
+        <div className="w-10 h-10 border-4 border-[#0d3834] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm font-semibold text-slate-700">Loading your diagnostic evaluation...</p>
+      </div>
+    );
+  }
+
   if (!result) {
     return (
       <div className="max-w-xl mx-auto mt-12 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm text-center">
+        <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-3" />
         <h2 className="text-xl font-bold text-slate-800 mb-2">No Assessment Result Available</h2>
         <p className="text-sm text-slate-600 mb-6">
-          Take a diagnostic assessment to evaluate your knowledge and generate an adaptive study plan.
+          {fetchError || 'Take a diagnostic assessment to evaluate your knowledge and generate your adaptive study plan.'}
         </p>
         <div className="flex items-center justify-center gap-3">
           <button
@@ -56,8 +88,9 @@ export const AssessmentResultPage: React.FC = () => {
   }
 
   const formatSeconds = (totalSec: number) => {
-    const mins = Math.floor(totalSec / 60);
-    const secs = totalSec % 60;
+    const validSec = typeof totalSec === 'number' && !isNaN(totalSec) ? Math.max(0, totalSec) : 0;
+    const mins = Math.floor(validSec / 60);
+    const secs = validSec % 60;
     return `${mins}m ${secs}s`;
   };
 
@@ -80,11 +113,30 @@ export const AssessmentResultPage: React.FC = () => {
     return 'text-rose-600';
   };
 
-  const breakdown: any[] = (result as any).topic_performances || (result as any).topic_breakdown || [];
-  const strongAreas = result.strong_areas || [];
-  const weakAreas = result.weak_areas || [];
-  const overallAcc = Math.round(result.accuracy ?? (result as any).accuracy_percentage ?? 0);
-  const displayTitle = result.title || (result as any).assessment_title || 'Diagnostic Assessment';
+  const breakdown: any[] = Array.isArray((result as any).topic_performances)
+    ? (result as any).topic_performances
+    : Array.isArray((result as any).topic_breakdown)
+    ? (result as any).topic_breakdown
+    : [];
+
+  const strongAreas: string[] = Array.isArray(result.strong_areas) ? result.strong_areas : [];
+  const weakAreas: string[] = Array.isArray(result.weak_areas) ? result.weak_areas : [];
+  const recFocus: string[] = Array.isArray(result.recommended_focus) ? result.recommended_focus : [];
+
+  const totalQ = typeof result.total_questions === 'number' && result.total_questions > 0 ? result.total_questions : 0;
+  const correctAns = typeof result.correct_answers === 'number' ? result.correct_answers : 0;
+  const incorrectAns = typeof result.incorrect_answers === 'number'
+    ? result.incorrect_answers
+    : Math.max(0, totalQ - correctAns);
+
+  const rawAccuracy = (result as any).accuracy_percentage ?? (result as any).accuracy;
+  const overallAcc = typeof rawAccuracy === 'number' && !isNaN(rawAccuracy)
+    ? Math.round(rawAccuracy)
+    : totalQ > 0
+    ? Math.round((correctAns / totalQ) * 100)
+    : 0;
+
+  const displayTitle = (result as any).title || (result as any).assessment_title || 'Diagnostic Assessment';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -127,7 +179,7 @@ export const AssessmentResultPage: React.FC = () => {
               Overall Accuracy
             </div>
             <div className="text-xs text-slate-200 mt-2 font-medium">
-              {result.correct_answers} of {result.total_questions} Correct
+              {correctAns} of {totalQ} Correct
             </div>
           </div>
         </div>
@@ -139,19 +191,19 @@ export const AssessmentResultPage: React.FC = () => {
           <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
             Questions
           </div>
-          <div className="text-2xl font-black text-slate-900">{result.total_questions}</div>
+          <div className="text-2xl font-black text-slate-900">{totalQ}</div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
           <div className="text-xs font-bold uppercase tracking-wider text-[#14b8a6] mb-1">
             Correct
           </div>
-          <div className="text-2xl font-black text-[#14b8a6]">{result.correct_answers}</div>
+          <div className="text-2xl font-black text-[#14b8a6]">{correctAns}</div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
           <div className="text-xs font-bold uppercase tracking-wider text-rose-600 mb-1">
             Incorrect
           </div>
-          <div className="text-2xl font-black text-rose-600">{result.incorrect_answers}</div>
+          <div className="text-2xl font-black text-rose-600">{incorrectAns}</div>
         </div>
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
@@ -254,52 +306,80 @@ export const AssessmentResultPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {breakdown.map((tb: any) => {
-                const acc = Math.round(tb.accuracy_percentage ?? tb.accuracy ?? 0);
-                const prior = Math.round(tb.mastery_score_before ?? tb.prior_mastery ?? 50);
-                const updated = Math.round(tb.mastery_score_after ?? tb.updated_mastery ?? 50);
-                const count = tb.total_questions ?? tb.questions_count ?? 1;
-                const pLevel = tb.priority_level ?? 2;
-                const pLabel =
-                  tb.priority_label === 'HIGH' || tb.priority_label === 'MEDIUM' || tb.priority_label === 'LOW'
-                    ? tb.priority_label
-                    : pLevel === 1
-                    ? 'HIGH'
-                    : pLevel === 2
-                    ? 'MEDIUM'
-                    : 'LOW';
+              {breakdown.length > 0 ? (
+                breakdown.map((tb: any) => {
+                  const tbTotal = typeof tb.total_questions === 'number' && tb.total_questions > 0
+                    ? tb.total_questions
+                    : typeof tb.questions_count === 'number' && tb.questions_count > 0
+                    ? tb.questions_count
+                    : 1;
+                  const tbCorrect = typeof tb.correct_count === 'number' ? tb.correct_count : 0;
+                  const acc = typeof tb.accuracy_percentage === 'number' && !isNaN(tb.accuracy_percentage)
+                    ? Math.round(tb.accuracy_percentage)
+                    : typeof tb.accuracy === 'number' && !isNaN(tb.accuracy)
+                    ? Math.round(tb.accuracy)
+                    : Math.round((tbCorrect / tbTotal) * 100);
 
-                return (
-                  <tr key={tb.topic_id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-slate-900">
-                      {tb.topic_name}
-                    </td>
-                    <td className="px-6 py-4 text-center font-medium text-slate-700">
-                      {tb.correct_count} / {count}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="font-bold text-slate-800">{acc}%</span>
-                    </td>
-                    <td className="px-6 py-4 text-center text-slate-500">
-                      {prior}%
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`font-black ${getMasteryColor(updated)}`}>
-                        {updated}%
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span
-                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getPriorityBadgeClass(
-                          pLevel
-                        )}`}
-                      >
-                        {pLabel}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+                  const prior = typeof tb.mastery_score_before === 'number' && !isNaN(tb.mastery_score_before)
+                    ? Math.round(tb.mastery_score_before)
+                    : typeof tb.prior_mastery === 'number' && !isNaN(tb.prior_mastery)
+                    ? Math.round(tb.prior_mastery)
+                    : 50;
+
+                  const updated = typeof tb.mastery_score_after === 'number' && !isNaN(tb.mastery_score_after)
+                    ? Math.round(tb.mastery_score_after)
+                    : typeof tb.updated_mastery === 'number' && !isNaN(tb.updated_mastery)
+                    ? Math.round(tb.updated_mastery)
+                    : 50;
+
+                  const pLevel = tb.priority_level ?? 2;
+                  const pLabel =
+                    tb.priority_label === 'HIGH' || tb.priority_label === 'MEDIUM' || tb.priority_label === 'LOW'
+                      ? tb.priority_label
+                      : pLevel === 1
+                      ? 'HIGH'
+                      : pLevel === 2
+                      ? 'MEDIUM'
+                      : 'LOW';
+
+                  return (
+                    <tr key={tb.topic_id || tb.topic_name} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 font-bold text-slate-900">
+                        {tb.topic_name}
+                      </td>
+                      <td className="px-6 py-4 text-center font-medium text-slate-700">
+                        {tbCorrect} / {tbTotal}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="font-bold text-slate-800">{acc}%</span>
+                      </td>
+                      <td className="px-6 py-4 text-center text-slate-500">
+                        {prior}%
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`font-black ${getMasteryColor(updated)}`}>
+                          {updated}%
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span
+                          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getPriorityBadgeClass(
+                            pLevel
+                          )}`}
+                        >
+                          {pLabel}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-slate-400 text-xs italic">
+                    No topic breakdown available for this evaluation.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -312,8 +392,8 @@ export const AssessmentResultPage: React.FC = () => {
             <BookOpen className="w-4 h-4" /> Recommended Clinical Focus
           </div>
           <h4 className="text-lg font-bold">
-            {(result.recommended_focus && result.recommended_focus.length > 0)
-              ? result.recommended_focus.join(' • ')
+            {recFocus.length > 0
+              ? recFocus.join(' • ')
               : 'Keep practicing to maintain high mastery!'}
           </h4>
           <p className="text-xs text-slate-200">
@@ -323,7 +403,7 @@ export const AssessmentResultPage: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <Link
-            to="/assessments"
+            to={`/assessments/${id || 1}`}
             className="px-4 py-2.5 border border-slate-600 hover:bg-white/10 rounded-xl font-semibold text-xs transition-colors flex items-center gap-1.5"
           >
             <RotateCw className="w-4 h-4" /> Retake Test

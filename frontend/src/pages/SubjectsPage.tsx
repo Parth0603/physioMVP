@@ -63,7 +63,8 @@ export const SubjectsPage: React.FC = () => {
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filtered.map((subject) => {
-          const totalTopics = subject.units.reduce((acc, u) => acc + u.topics.length, 0);
+          const subUnits = subject.units || [];
+          const totalTopics = subUnits.reduce((acc, u) => acc + (u.topics?.length || 0), 0);
           return (
             <div
               key={subject.id}
@@ -87,7 +88,7 @@ export const SubjectsPage: React.FC = () => {
               <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-xs text-slate-500 flex items-center gap-1.5">
                   <Layers className="w-3.5 h-3.5 text-slate-400" />
-                  {subject.units.length} Units ({totalTopics} Topics)
+                  {subUnits.length} Units ({totalTopics} Topics)
                 </span>
                 <Link
                   to={`/subjects/${subject.id}`}

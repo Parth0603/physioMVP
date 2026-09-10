@@ -23,7 +23,11 @@ class UserRepository(BaseRepository[User]):
     def get_with_profile(self, db: Session, user_id: int) -> Optional[User]:
         return (
             db.query(User)
-            .options(joinedload(User.student_profile))
+            .options(
+                joinedload(User.student_profile),
+                joinedload(User.faculty_profile),
+                joinedload(User.admin_profile),
+            )
             .filter(User.id == user_id)
             .first()
         )
