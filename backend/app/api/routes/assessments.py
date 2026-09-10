@@ -77,3 +77,17 @@ def submit_assessment(
     current_user: User = Depends(get_current_user),
 ):
     return assessment_service.submit_assessment(db, current_user.id, assessment_id, req)
+
+
+@router.get(
+    "/{assessment_id}/latest-result",
+    response_model=AssessmentResultResponse,
+    summary="Get the student's latest result for this assessment",
+)
+def get_latest_assessment_result(
+    assessment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return assessment_service.get_latest_result(db, current_user.id, assessment_id)
+

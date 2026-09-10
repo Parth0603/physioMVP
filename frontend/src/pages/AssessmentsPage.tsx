@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ArrowRight,
   Sparkles,
+  ChevronLeft,
 } from 'lucide-react';
 
 export const AssessmentsPage: React.FC = () => {
@@ -35,6 +36,16 @@ export const AssessmentsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Top Back Navigation */}
+      <div>
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#0d3834] transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" /> Back to Dashboard
+        </button>
+      </div>
+
       {/* Header Banner */}
       <div className="bg-[#0d3834] border border-[#155952] rounded-3xl p-8 text-white shadow-md relative overflow-hidden">
         <div className="relative z-10 max-w-3xl">
@@ -100,12 +111,12 @@ export const AssessmentsPage: React.FC = () => {
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <span
                       className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${
-                        a.type === 'diagnostic'
+                        (a.assessment_type || a.type || 'diagnostic') === 'diagnostic'
                           ? 'bg-[#edf7f6] text-[#0d3834] border border-[#b0dcd5]'
                           : 'bg-[#f0fdf9] text-[#065f46] border border-[#a7f3d0]'
                       }`}
                     >
-                      {a.type.toUpperCase()} TEST
+                      {(a.assessment_type || a.type || 'diagnostic').toUpperCase()} TEST
                     </span>
                     <span className="inline-flex items-center gap-1 text-xs text-slate-500 font-medium">
                       <Clock className="w-4 h-4 text-slate-400" />

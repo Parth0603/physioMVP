@@ -17,11 +17,14 @@ sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), ".."
 
 from app.db.session import engine, SessionLocal, Base
 from app.core.security import get_password_hash
+import json
 from app.models.user import User, UserRole
 from app.models.student_profile import StudentProfile
 from app.models.academic import Subject, Unit, Topic, DifficultyLevel
 from app.models.content import Content, ContentType
 from app.models.question import Question, QuestionOption, QuestionType
+from app.models.clinical_case import ClinicalCase
+from app.models.viva import VivaQuestion
 from app.models.assessment import Assessment, AssessmentQuestion, AssessmentType
 from app.models.progress import StudentProgress
 from app.models.study_plan import StudyPlan, StudyPlanItem, PlanStatus, PlanItemStatus
@@ -322,9 +325,227 @@ def seed_database():
                 db.add(aq)
             db.commit()
 
-        print("Database seeding completed successfully for Part 2!")
+        # =========================================================================
+        # PART 3: CONCEPT CONTENT, VIVA QUESTIONS & CLINICAL CASES
+        # =========================================================================
+        print("Seeding Part 3: Concept Learning Content...")
+        def add_content(topic_id, title, c_type, body, ref=""):
+            exists = db.query(Content).filter(Content.title == title).first()
+            if not exists:
+                c = Content(
+                    topic_id=topic_id,
+                    title=title,
+                    content_type=c_type,
+                    content_body=body,
+                    reference=ref,
+                    is_verified=True,
+                )
+                db.add(c)
+                db.commit()
+
+        add_content(
+            topic_rotator.id,
+            "Rotator Cuff Functional Anatomy & Scapulohumeral Rhythm",
+            ContentType.CONCEPT,
+            "The rotator cuff consists of Supraspinatus, Infraspinatus, Teres Minor, and Subscapularis (SITS).\n\n"
+            "• Supraspinatus initiates abduction (0-15°) and pulls the humeral head into the glenoid.\n"
+            "• Infraspinatus & Teres Minor dynamically externally rotate and exert inferior glide.\n"
+            "• Subscapularis internally rotates and anteriorly stabilizes the humeral head.\n\n"
+            "Force Coupling: The primary action of the cuff is not pure movement generation, but dynamic glenohumeral compression countering the upward shear force of the deltoid.",
+            "Kisner & Colby: Therapeutic Exercise - Foundations and Techniques, 7th Ed."
+        )
+
+        add_content(
+            topic_rotator.id,
+            "Clinical Guidelines: Subacromial Impingement Rehabilitation Protocol",
+            ContentType.CLINICAL_GUIDELINE,
+            "Phase 1: Protection & Pain Relief (Weeks 0-2)\n"
+            "• Relative rest, avoid active elevation above 90°.\n"
+            "• Cryotherapy & postural education (retract scapulae).\n"
+            "• Submaximal isometric rotator cuff exercises at neutral.\n\n"
+            "Phase 2: Dynamic Strengthening (Weeks 2-6)\n"
+            "• Scapular upward rotator strengthening (Serratus anterior, Lower trapezius).\n"
+            "• Elastic band external & internal rotation with towel roll under armpit.\n"
+            "• Neuromuscular control & rhythmic stabilization.",
+            "American Physical Therapy Association (APTA) Clinical Practice Guidelines"
+        )
+
+        add_content(
+            topic_brachial.id,
+            "Topographical Organization & Pathology of the Brachial Plexus",
+            ContentType.CONCEPT,
+            "The brachial plexus is formed by anterior rami of C5-T1:\n"
+            "• Roots (5): C5, C6, C7, C8, T1\n"
+            "• Trunks (3): Upper (C5-C6), Middle (C7), Lower (C8-T1)\n"
+            "• Divisions (6): 3 Anterior (flexor), 3 Posterior (extensor)\n"
+            "• Cords (3): Lateral, Posterior, Medial (named relative to axillary artery)\n"
+            "• Terminal branches: Musculocutaneous, Axillary, Radial, Median, Ulnar.\n\n"
+            "Clinical Tractions: Erb-Duchenne palsy involves C5-C6 avulsion causing waiter's tip deformity. Klumpke palsy involves C8-T1 avulsion resulting in claw hand deformity.",
+            "Magee: Orthopedic Physical Assessment, 6th Ed."
+        )
+
+        add_content(
+            topic_knee.id,
+            "Knee Joint Kinematics & The Screw-Home Mechanism",
+            ContentType.CONCEPT,
+            "The knee joint is a bicondylar synovial joint reinforced by key static restraints:\n"
+            "• ACL: Resists anterior tibial translation and internal tibial rotation.\n"
+            "• PCL: Resists posterior tibial translation in flexion.\n"
+            "• MCL & LCL: Counter valgus and varus stress, respectively.\n\n"
+            "Screw-Home Mechanism:\n"
+            "During terminal 15-20° of extension in open chain, the tibia externally rotates on the fixed femur. In closed chain, the femur internally rotates on the fixed tibia. Popliteus muscle laterally rotates femur to unlock the knee for flexion initiation.",
+            "Norkin & Levangie: Joint Structure and Function, 5th Ed."
+        )
+
+        add_content(
+            topic_sliding.id,
+            "Biophysical Mechanics of the Sliding Filament Theory",
+            ContentType.CONCEPT,
+            "Muscle contraction operates via cyclic interaction between thin actin and thick myosin filaments:\n"
+            "1. Action potential propagates down T-tubules triggering Ca2+ release from sarcoplasmic reticulum.\n"
+            "2. Ca2+ binds Troponin-C, producing allosteric shift in Tropomyosin to uncover myosin binding sites.\n"
+            "3. Myosin head binds actin, releases inorganic phosphate, and performs the 45° Power Stroke.\n"
+            "4. A new ATP binds myosin to break cross-bridge; ATP hydrolysis by myosin ATPase re-cocks the head.",
+            "Guyton and Hall Textbook of Medical Physiology, 14th Ed."
+        )
+
+        print("Seeding Part 3: Viva Voce Questions...")
+        def add_viva(topic_id, q_text, concepts, model_ans, explanation, diff=DifficultyLevel.BEGINNER):
+            exists = db.query(VivaQuestion).filter(VivaQuestion.question_text == q_text).first()
+            if not exists:
+                v = VivaQuestion(
+                    topic_id=topic_id,
+                    question_text=q_text,
+                    expected_concepts=json.dumps(concepts),
+                    model_answer=model_ans,
+                    explanation=explanation,
+                    difficulty_level=diff,
+                    is_verified=True,
+                )
+                db.add(v)
+                db.commit()
+
+        add_viva(
+            topic_rotator.id,
+            "Explain the dynamic stabilization mechanism of the rotator cuff force couple during shoulder abduction.",
+            ["Supraspinatus initiates abduction", "Inferior force couple counters deltoid shear", "Humeral head depression in glenoid fossa", "Concentric compression against glenoid labrum"],
+            "During arm elevation, the powerful deltoid generates an upward vertical shear force. The inferior rotator cuff (infraspinatus, teres minor, subscapularis) produces a downward force couple that depresses and centers the humeral head inside the shallow glenoid fossa, creating a stable fulcrum and preventing subacromial impingement.",
+            "Focus on the force couple balance between the deltoid and inferior cuff muscles.",
+            DifficultyLevel.INTERMEDIATE
+        )
+
+        add_viva(
+            topic_rotator.id,
+            "How would you clinically differentiate between Supraspinatus Tendinopathy and Subacromial Bursitis?",
+            ["Painful arc between 70 and 120 degrees", "Resisted isometric abduction test pain", "Passive movement pain free in tendinopathy without compression", "Tenderness over greater tubercle"],
+            "Supraspinatus tendinopathy typically demonstrates localized tenderness over the greater tubercle, painful arc, and sharp pain during resisted isometric abduction (Empty Can test). In subacromial bursitis, pain is more diffuse over the lateral deltoid and passive non-contractile compression produces severe distress without muscle contraction.",
+            "Differentiating contractile vs non-contractile tissue via Cyriax selective tissue tension.",
+            DifficultyLevel.INTERMEDIATE
+        )
+
+        add_viva(
+            topic_brachial.id,
+            "Describe the clinical signs, pathomechanics, and physical deformity in Erb-Duchenne Palsy.",
+            ["Traction of upper trunk C5 and C6 roots", "Paralysis of abductors and external rotators", "Arm adducted, internally rotated, and forearm pronated", "Waiter's tip deformity"],
+            "Erb's palsy is caused by downward traction on the shoulder or lateral neck stretching during difficult delivery or trauma, tearing C5-C6 nerve roots. Because abductors, external rotators, and forearm supinators are paralyzed while antagonists remain unopposed, the upper limb adopts the classic 'waiter's tip' posture (adducted, medially rotated, extended, pronated).",
+            "Key roots are C5 and C6 involving suprascapular, axillary, and musculocutaneous nerves.",
+            DifficultyLevel.BEGINNER
+        )
+
+        add_viva(
+            topic_knee.id,
+            "Explain why the Lachman test is clinically superior to the Anterior Drawer test for evaluating an acute ACL tear.",
+            ["Performed at 20 to 30 degrees of knee flexion", "Eliminates protective hamstring muscle guarding", "Minimizes posterior horn meniscal wedge resistance", "Direct anterior tibial translation"],
+            "The Lachman test is performed at 20-30° of flexion, which eliminates the secondary stabilizing effect of the posterior horn of the medial meniscus and reduces protective hamstring spasm that occurs at 90° in acute swollen knees. This makes Lachman significantly more sensitive and specific (95%+) than the anterior drawer test.",
+            "Biomechanics of ligamentous orientation at 30° vs 90° flexion.",
+            DifficultyLevel.INTERMEDIATE
+        )
+
+        add_viva(
+            topic_sliding.id,
+            "What is the dual physiological role of ATP in the actin-myosin cross-bridge cycle and rigor mortis?",
+            ["ATP hydrolysis energizes and cocks myosin head", "Binding of new ATP molecule triggers cross-bridge detachment", "Absence of ATP prevents detachment causing rigor mortis", "ATP fuels sarcoplasmic reticulum calcium pump"],
+            "ATP has two critical roles: 1) Hydrolysis of ATP into ADP + Pi by myosin ATPase re-cocks the myosin head into high-energy conformation for the power stroke. 2) The subsequent binding of a fresh ATP molecule is obligatory to break the actin-myosin bond. When cellular ATP is depleted post-mortem, myosin heads remain irreversibly locked to actin, resulting in rigor mortis.",
+            "Cross-bridge dissociation requires ATP binding; re-energizing requires hydrolysis.",
+            DifficultyLevel.INTERMEDIATE
+        )
+
+        print("Seeding Part 3: Clinical Reasoning Cases...")
+        def add_case(topic_id, title, desc, age, gender, complaint, symptoms, hist, findings, hypo, assess, mgmt, concepts, diff=DifficultyLevel.INTERMEDIATE):
+            exists = db.query(ClinicalCase).filter(ClinicalCase.title == title).first()
+            if not exists:
+                c = ClinicalCase(
+                    topic_id=topic_id,
+                    title=title,
+                    case_description=desc,
+                    patient_age=age,
+                    patient_gender=gender,
+                    chief_complaint=complaint,
+                    symptoms=symptoms,
+                    medical_history=hist,
+                    assessment_findings=findings,
+                    expected_hypothesis=hypo,
+                    expected_assessments=assess,
+                    expected_management=mgmt,
+                    key_concepts=json.dumps(concepts),
+                    difficulty_level=diff,
+                    is_verified=True,
+                )
+                db.add(c)
+                db.commit()
+
+        add_case(
+            topic_rotator.id,
+            "Case #1: Chronic Shoulder Pain & Painful Arc in an Overhead Badminton Athlete",
+            "A 42-year-old amateur badminton athlete presents with persistent right anterolateral shoulder discomfort that has worsened over 3 months, particularly during overhead smashes and night sleeping on the affected side.",
+            42,
+            "Male",
+            "Aching pain in right anterolateral shoulder during overhead movements and night sleeping.",
+            "Mid-range elevation pain, localized warmth, difficulty lifting arm above head, weakness with overhead tasks.",
+            "No prior shoulder surgery or fracture. Desk-bound software engineer with weekend competitive racket sports.",
+            "Active ROM: Painful arc between 70° and 120°. Passive ROM full with end-range impingement pain. Neer test positive, Hawkins-Kennedy test positive. Empty Can test reproduces lateral shoulder pain with mild weakness (4/5).",
+            "Subacromial impingement syndrome with supraspinatus tendinopathy",
+            "Neer test; Hawkins-Kennedy test; Empty Can test (Jobe's); Scapular dyskinesis evaluation; Cervical spine screen",
+            "Relative rest & avoidance of aggravating overhead elevation; Cryotherapy for acute flare-ups; Isometric rotator cuff strengthening; Scapular stabilization exercises (Serratus anterior, lower trapezius); Postural ergonomic modification",
+            ["Subacromial impingement", "Supraspinatus tendinopathy", "Painful arc syndrome", "Neer test", "Hawkins-Kennedy", "Rotator cuff strengthening", "Scapular stabilization"]
+        )
+
+        add_case(
+            topic_knee.id,
+            "Case #2: Acute Non-Contact Deceleration Knee 'Pop' with Hemarthrosis in a Football Player",
+            "A 24-year-old collegiate football player experiences a sudden deceleration, pivot, and hyperextension injury on a turf field. He reports hearing a loud 'pop' inside the right knee followed by immediate collapse and inability to continue play.",
+            24,
+            "Male",
+            "Severe right knee pain, rapid joint swelling, and giving-way sensation upon weight bearing.",
+            "Rapid joint effusion within 2 hours, inability to bear weight without crutches, sensation of knee 'slipping'.",
+            "Unremarkable. No prior knee ligamentous or meniscal injury.",
+            "Gross joint effusion (hemarthrosis positive). Lachman test positive with soft mushy end-point and >6mm anterior tibial translation. Anterior drawer test positive. McMurray test negative. Varus and valgus stress tests stable at 0° and 30°.",
+            "Acute Anterior Cruciate Ligament (ACL) high-grade or complete rupture",
+            "Lachman test; Pivot-Shift test; Knee MRI study; Joint effusion ballottement; Hamstring and quadriceps girth comparison",
+            "Immediate RICE protocol (Rest, Ice, Compression, Elevation); Hinged knee brace in extension for ambulation; Early quadriceps isometric sets and straight leg raises; Active-assisted knee flexion to 90°; Referral for orthopedic surgical consultation",
+            ["ACL tear", "Anterior Cruciate Ligament rupture", "Hemarthrosis", "Lachman test", "Pivot shift", "RICE protocol", "Quadriceps activation", "Early range of motion"]
+        )
+
+        add_case(
+            topic_brachial.id,
+            "Case #3: Upper Limb Weakness Following a High-Velocity Motorcycle Traction Fall",
+            "A 28-year-old motorcyclist suffered a shoulder impact with forceful lateral neck deviation to the opposite side. Post-trauma, he is unable to lift the right arm away from his side or bend his elbow.",
+            28,
+            "Male",
+            "Complete inability to lift right shoulder or bend the right elbow.",
+            "Loss of shoulder abduction, loss of elbow flexion, numbness over the lateral shoulder deltoid region and radial forearm.",
+            "Emergency department X-ray cleared cervical fracture. Clavicle contusion noted.",
+            "Right upper limb hangs limp in adduction and internal rotation with forearm extended and pronated ('waiter's tip' posture). Deltoid, supraspinatus, infraspinatus, and biceps brachii strength is 0/5. Biceps jerk absent. Sensory loss over C5-C6 dermatomes.",
+            "Upper Trunk Brachial Plexus Traction Injury (Erb's Palsy pattern, C5-C6 lesion)",
+            "Electromyography (EMG) and Nerve Conduction Velocity (NCV) studies; Brachial plexus MRI; Manual Muscle Testing (MMT) baseline; Sensory dermatomal mapping",
+            "Supportive arm sling to prevent inferior glenohumeral subluxation; Daily gentle passive ROM to shoulder, elbow, and wrist to prevent contractures; Electrical stimulation to denervated muscle bellies; Patient education on skin protection over anesthetic zones",
+            ["Erb's palsy", "Upper trunk brachial plexus lesion", "C5 and C6 nerve roots", "Waiter's tip deformity", "Passive ROM maintenance", "Subluxation prevention sling", "Electrical stimulation"]
+        )
+
+        print("Database seeding completed successfully for Part 3!")
     finally:
         db.close()
+
 
 
 if __name__ == "__main__":

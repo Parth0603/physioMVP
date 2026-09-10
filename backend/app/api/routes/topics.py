@@ -66,3 +66,63 @@ def update_topic(topic_id: int, data: TopicUpdate, db: Session = Depends(get_db)
 )
 def delete_topic(topic_id: int, db: Session = Depends(get_db)):
     academic_service.delete_topic(db, topic_id)
+
+
+@router.post(
+    "/{topic_id}/mark-reviewed",
+    summary="Mark topic concepts as reviewed by the student, updating learning activity and progress",
+)
+def mark_topic_reviewed(
+    topic_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from datetime import datetime, timezone, timedelta
+    from app.models.progress import StudentProgress
+    from app.models.study_plan import StudyPlanItem, PlanItemStatus
+    from app.models.academic import Topic
+    from app.core.exceptions import EntityNotFoundException
+
+    topic = db.query(Topic).filter(Topic.id == topic_id).first()
+    if not topic:
+        raise EntityNotFoundException("Topic", topic_id)
+
+    now = datetime.now(timezone.utc)
+    progress = db.query(StudentProgress).filter(
+        StudentProgress.student_id == current_user.id,
+        StudentProgress.topic_id == topic_id,
+    ).first()
+
+    if not progress:
+        progress = StudentProgress(
+            student_id=current_user.id,
+            topic_id=topic_id,
+            mastery_score=40.0,
+            attempts=0,
+            correct_attempts=0,
+            last_attempt_at=now,
+            next_review_at=now + timedelta(days=3),
+        )
+        db.add(progress)
+    else:
+        progress.mastery_score = min(85.0, progress.mastery_score + 10.0)
+        progress.last_attempt_at = now
+        progress.next_review_at = now + timedelta(days=3)
+
+    plan_item = db.query(StudyPlanItem).filter(
+        StudyPlanItem.topic_id == topic_id,
+        StudyPlanItem.status == PlanItemStatus.PENDING,
+    ).first()
+    if plan_item:
+        plan_item.status = PlanItemStatus.COMPLETED
+
+    db.commit()
+    return {
+        "status": "success",
+        "topic_id": topic_id,
+        "message": f"Topic '{topic.name}' marked as reviewed.",
+        "mastery_level": progress.mastery_score,
+        "mastery_score": progress.mastery_score,
+        "next_review_at": progress.next_review_at,
+    }
+

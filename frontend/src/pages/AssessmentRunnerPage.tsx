@@ -83,8 +83,9 @@ export const AssessmentRunnerPage: React.FC = () => {
     if (!assessmentData || !id) return;
     try {
       setIsSubmitting(true);
-      const answersPayload: AnswerSubmission[] = assessmentData.questions.map((q) => ({
+      const answersPayload: any[] = assessmentData.questions.map((q) => ({
         question_id: q.id,
+        selected_option_text: selectedAnswers[q.id] || '',
         answer: selectedAnswers[q.id] || '',
         time_taken_seconds: questionTimes[q.id] || 15,
       }));
@@ -93,12 +94,21 @@ export const AssessmentRunnerPage: React.FC = () => {
         answers: answersPayload,
       });
 
-      // Pass result in navigation state
-      navigate(`/assessments/${id}/result`, { state: { result } });
+      // Save result in sessionStorage so it survives reloads & browser history
+      sessionStorage.setItem(`assessment_result_${id}`, JSON.stringify(result));
+
+      // Pass result in navigation state with replace: true to prevent looping back into running test
+      navigate(`/assessments/${id}/result`, { state: { result }, replace: true });
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Error submitting assessment. Please try again.');
       setIsSubmitting(false);
       setShowConfirmModal(false);
+    }
+  };
+
+  const handleExitTest = () => {
+    if (window.confirm('Are you sure you want to exit this assessment? Your current answers will not be submitted.')) {
+      navigate('/assessments');
     }
   };
 
@@ -138,6 +148,17 @@ export const AssessmentRunnerPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Top Exit Navigation Link */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={handleExitTest}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-rose-600 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Exit Assessment
+        </button>
+        <span className="text-xs text-slate-400">All progress is stored locally during the session</span>
+      </div>
+
       {/* Top Bar with Title, Timer & Progress Bar */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">

@@ -67,7 +67,8 @@ class AssessmentStartResponse(BaseModel):
 
 class AnswerSubmission(BaseModel):
     question_id: int
-    selected_option_text: str
+    selected_option_text: Optional[str] = None
+    answer: Optional[str] = None
     time_taken_seconds: int = 0
 
 

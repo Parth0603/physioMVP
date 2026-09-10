@@ -19,6 +19,13 @@ import { AssessmentsPage } from './pages/AssessmentsPage';
 import { AssessmentRunnerPage } from './pages/AssessmentRunnerPage';
 import { AssessmentResultPage } from './pages/AssessmentResultPage';
 
+// Part 3: Learning & Practice Pages
+import { ConceptLearningPage } from './pages/ConceptLearningPage';
+import { MCQPracticePage } from './pages/MCQPracticePage';
+import { VivaPracticePage } from './pages/VivaPracticePage';
+import { ClinicalCasePage } from './pages/ClinicalCasePage';
+import { PracticeHubPage } from './pages/PracticeHubPage';
+
 // Admin Pages
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminSubjectsPage } from './pages/AdminSubjectsPage';
@@ -27,6 +34,8 @@ import { AdminQuestionsPage } from './pages/AdminQuestionsPage';
 
 // Faculty Pages
 import { FacultyDashboard } from './pages/FacultyDashboard';
+
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 export const App: React.FC = () => {
   return (
@@ -42,7 +51,9 @@ export const App: React.FC = () => {
             path="/"
             element={
               <ProtectedRoute>
-                <MainLayout />
+                <ErrorBoundary>
+                  <MainLayout />
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           >
@@ -54,6 +65,11 @@ export const App: React.FC = () => {
             <Route path="subjects" element={<SubjectsPage />} />
             <Route path="subjects/:subjectId" element={<SubjectDetailPage />} />
             <Route path="topics/:topicId" element={<TopicDetailPage />} />
+            <Route path="learn/:topicId" element={<ConceptLearningPage />} />
+            <Route path="practice" element={<PracticeHubPage />} />
+            <Route path="practice/mcq/:topicId" element={<MCQPracticePage />} />
+            <Route path="practice/viva/:topicId" element={<VivaPracticePage />} />
+            <Route path="practice/case/:caseId" element={<ClinicalCasePage />} />
             <Route path="assessments" element={<AssessmentsPage />} />
             <Route path="assessments/:id" element={<AssessmentRunnerPage />} />
             <Route path="assessments/:id/result" element={<AssessmentResultPage />} />

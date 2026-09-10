@@ -1,5 +1,5 @@
-import React from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import { AssessmentResultResponse } from '../types';
 import {
   CheckCircle2,
@@ -9,12 +9,26 @@ import {
   Sparkles,
   BookOpen,
   RotateCw,
+  ChevronLeft,
 } from 'lucide-react';
 
 export const AssessmentResultPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const result = (location.state as { result?: AssessmentResultResponse })?.result;
+
+  const [result] = useState<AssessmentResultResponse | null>(() => {
+    if (location.state?.result) return location.state.result;
+    if (id) {
+      try {
+        const cached = sessionStorage.getItem(`assessment_result_${id}`);
+        if (cached) return JSON.parse(cached);
+      } catch (e) {
+        // ignore JSON parse error
+      }
+    }
+    return null;
+  });
 
   if (!result) {
     return (
@@ -23,12 +37,20 @@ export const AssessmentResultPage: React.FC = () => {
         <p className="text-sm text-slate-600 mb-6">
           Take a diagnostic assessment to evaluate your knowledge and generate an adaptive study plan.
         </p>
-        <button
-          onClick={() => navigate('/assessments')}
-          className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors"
-        >
-          View Assessments
-        </button>
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => navigate('/assessments')}
+            className="px-5 py-2.5 bg-[#0d3834] text-white rounded-xl font-semibold text-sm hover:bg-[#124842] transition-colors"
+          >
+            View Assessments
+          </button>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="px-5 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-semibold text-sm hover:bg-slate-50 transition-colors"
+          >
+            Return to Dashboard
+          </button>
+        </div>
       </div>
     );
   }
@@ -59,8 +81,30 @@ export const AssessmentResultPage: React.FC = () => {
     return 'text-rose-600';
   };
 
+  const breakdown: any[] = (result as any).topic_performances || (result as any).topic_breakdown || [];
+  const strongAreas = result.strong_areas || [];
+  const weakAreas = result.weak_areas || [];
+  const overallAcc = Math.round(result.accuracy ?? (result as any).accuracy_percentage ?? 0);
+  const displayTitle = result.title || (result as any).assessment_title || 'Diagnostic Assessment';
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Top Back Navigation */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#0d3834] transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" /> Return to Dashboard
+        </button>
+        <button
+          onClick={() => navigate('/assessments')}
+          className="text-xs font-semibold text-[#0d3834] hover:underline"
+        >
+          All Assessments
+        </button>
+      </div>
+
       {/* Header Result Summary Card */}
       <div className="bg-[#0d3834] border border-[#155952] rounded-3xl p-8 text-white shadow-md relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
@@ -69,7 +113,7 @@ export const AssessmentResultPage: React.FC = () => {
               <Sparkles className="w-4 h-4 text-[#2dd4bf]" />
               Diagnostic Evaluation Complete
             </div>
-            <h1 className="text-3xl font-black tracking-tight mb-2">{result.title}</h1>
+            <h1 className="text-3xl font-black tracking-tight mb-2">{displayTitle}</h1>
             <p className="text-slate-200 text-sm max-w-lg">
               Your topic-level clinical performance has been analyzed. Topic mastery scores have been updated and an adaptive study plan has been generated.
             </p>
@@ -78,7 +122,7 @@ export const AssessmentResultPage: React.FC = () => {
           {/* Score Badge */}
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-center min-w-[200px]">
             <div className="text-5xl font-black tracking-tight text-white mb-1">
-              {Math.round(result.accuracy)}%
+              {overallAcc}%
             </div>
             <div className="text-xs font-bold uppercase tracking-wider text-[#a7f3d0]">
               Overall Accuracy
@@ -116,7 +160,7 @@ export const AssessmentResultPage: React.FC = () => {
           </div>
           <div className="text-2xl font-black text-[#0d3834] flex items-center justify-center gap-1">
             <Clock className="w-5 h-5 text-slate-400" />
-            <span>{formatSeconds(result.total_time_seconds)}</span>
+            <span>{formatSeconds(result.total_time_seconds || 0)}</span>
           </div>
         </div>
       </div>
@@ -135,9 +179,9 @@ export const AssessmentResultPage: React.FC = () => {
             </div>
           </div>
 
-          {result.strong_areas.length > 0 ? (
+          {strongAreas.length > 0 ? (
             <ul className="space-y-2.5">
-              {result.strong_areas.map((topic, i) => (
+              {strongAreas.map((topic, i) => (
                 <li
                   key={i}
                   className="flex items-center gap-2.5 text-sm font-semibold text-[#065f46] bg-[#f0fdf9] border border-[#a7f3d0] px-3.5 py-2 rounded-xl"
@@ -164,9 +208,9 @@ export const AssessmentResultPage: React.FC = () => {
             </div>
           </div>
 
-          {result.weak_areas.length > 0 ? (
+          {weakAreas.length > 0 ? (
             <ul className="space-y-2.5">
-              {result.weak_areas.map((topic, i) => (
+              {weakAreas.map((topic, i) => (
                 <li
                   key={i}
                   className="flex items-center gap-2.5 text-sm font-semibold text-rose-900 bg-rose-50/70 border border-rose-100 px-3.5 py-2 rounded-xl"
@@ -194,7 +238,7 @@ export const AssessmentResultPage: React.FC = () => {
             </p>
           </div>
           <span className="text-xs font-semibold px-2.5 py-1 bg-[#edf7f6] text-[#0d3834] rounded-full">
-            {result.topic_breakdown.length} Topics Evaluated
+            {breakdown.length} Topics Evaluated
           </span>
         </div>
 
@@ -211,36 +255,45 @@ export const AssessmentResultPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {result.topic_breakdown.map((tb) => (
-                <tr key={tb.topic_id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4 font-bold text-slate-900">
-                    {tb.topic_name}
-                  </td>
-                  <td className="px-6 py-4 text-center font-medium text-slate-700">
-                    {tb.correct_count} / {tb.total_questions}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className="font-bold text-slate-800">{Math.round(tb.accuracy)}%</span>
-                  </td>
-                  <td className="px-6 py-4 text-center text-slate-500">
-                    {Math.round(tb.prior_mastery)}%
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`font-black ${getMasteryColor(tb.updated_mastery)}`}>
-                      {Math.round(tb.updated_mastery)}%
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span
-                      className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold uppercase border ${getPriorityBadgeClass(
-                        tb.priority_level
-                      )}`}
-                    >
-                      {tb.priority_label}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {breakdown.map((tb: any) => {
+                const acc = Math.round(tb.accuracy_percentage ?? tb.accuracy ?? 0);
+                const prior = Math.round(tb.mastery_score_before ?? tb.prior_mastery ?? 50);
+                const updated = Math.round(tb.mastery_score_after ?? tb.updated_mastery ?? 50);
+                const count = tb.total_questions ?? tb.questions_count ?? 1;
+                const pLevel = tb.priority_level ?? 2;
+                const pLabel = tb.mastery_band || tb.priority_label || (pLevel === 1 ? 'High Gap' : 'Normal');
+
+                return (
+                  <tr key={tb.topic_id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4 font-bold text-slate-900">
+                      {tb.topic_name}
+                    </td>
+                    <td className="px-6 py-4 text-center font-medium text-slate-700">
+                      {tb.correct_count} / {count}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="font-bold text-slate-800">{acc}%</span>
+                    </td>
+                    <td className="px-6 py-4 text-center text-slate-500">
+                      {prior}%
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`font-black ${getMasteryColor(updated)}`}>
+                        {updated}%
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span
+                        className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold uppercase border ${getPriorityBadgeClass(
+                          pLevel
+                        )}`}
+                      >
+                        {pLabel}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -253,7 +306,7 @@ export const AssessmentResultPage: React.FC = () => {
             <BookOpen className="w-4 h-4" /> Recommended Clinical Focus
           </div>
           <h4 className="text-lg font-bold">
-            {result.recommended_focus.length > 0
+            {(result.recommended_focus && result.recommended_focus.length > 0)
               ? result.recommended_focus.join(' • ')
               : 'Keep practicing to maintain high mastery!'}
           </h4>

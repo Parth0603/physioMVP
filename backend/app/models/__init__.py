@@ -4,6 +4,7 @@ from app.models.academic import Subject, Unit, Topic, DifficultyLevel
 from app.models.content import Content, ContentType
 from app.models.question import Question, QuestionOption, QuestionType
 from app.models.clinical_case import ClinicalCase
+from app.models.viva import VivaQuestion
 from app.models.progress import StudentProgress
 from app.models.study_plan import StudyPlan, StudyPlanItem, PlanStatus, PlanItemStatus
 from app.models.attempt import Attempt
@@ -23,6 +24,7 @@ __all__ = [
     "QuestionOption",
     "QuestionType",
     "ClinicalCase",
+    "VivaQuestion",
     "StudentProgress",
     "StudyPlan",
     "StudyPlanItem",

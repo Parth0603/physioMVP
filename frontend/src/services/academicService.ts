@@ -74,4 +74,9 @@ export const academicService = {
   deleteTopic: async (id: number): Promise<void> => {
     await api.delete(`/topics/${id}`);
   },
+
+  markTopicReviewed: async (id: number): Promise<{ message: string; topic_id: number; mastery_level: number }> => {
+    const response = await api.post(`/topics/${id}/mark-reviewed`);
+    return response.data;
+  },
 };

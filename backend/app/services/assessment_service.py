@@ -154,7 +154,8 @@ class AssessmentService:
             if not q:
                 continue
 
-            is_correct = (answer_sub.selected_option_text.strip() == q.correct_answer.strip())
+            chosen_text = (answer_sub.selected_option_text or answer_sub.answer or "").strip()
+            is_correct = (chosen_text.lower() == q.correct_answer.strip().lower())
             if is_correct:
                 total_correct += 1
 
@@ -165,7 +166,7 @@ class AssessmentService:
                 student_id=student_id,
                 question_id=q.id,
                 assessment_id=assessment_id,
-                answer=answer_sub.selected_option_text,
+                answer=chosen_text,
                 is_correct=is_correct,
                 time_taken=answer_sub.time_taken_seconds,
                 attempted_at=now,
@@ -272,5 +273,80 @@ class AssessmentService:
             study_plan_id=study_plan.id if study_plan else None,
         )
 
+    @staticmethod
+    def get_latest_result(db: Session, student_id: int, assessment_id: int) -> AssessmentResultResponse:
+        assessment = assessment_repo.get_with_questions(db, assessment_id)
+        if not assessment:
+            raise EntityNotFoundException("Assessment", assessment_id)
+
+        q_ids = [aq.question_id for aq in assessment.assessment_questions if aq.question]
+        attempts = db.query(Attempt).filter(
+            Attempt.student_id == student_id,
+            Attempt.question_id.in_(q_ids),
+        ).order_by(Attempt.attempted_at.desc()).all()
+
+        if not attempts:
+            raise PhysioSmartException(status_code=404, detail="No previous assessment results found for this student.")
+
+        latest_by_q = {}
+        for a in attempts:
+            if a.question_id not in latest_by_q:
+                latest_by_q[a.question_id] = a
+
+        total_correct = sum(1 for a in latest_by_q.values() if a.is_correct)
+        total_q = len(latest_by_q)
+        total_time = sum(a.time_taken for a in latest_by_q.values())
+        overall_acc = (total_correct / total_q) * 100.0 if total_q > 0 else 0.0
+
+        topic_ids = list(set(a.question.topic_id for a in latest_by_q.values() if a.question))
+        topic_performances = []
+        strong_areas = []
+        weak_areas = []
+        recommended_focus = []
+
+        for tid in topic_ids:
+            prog = db.query(StudentProgress).filter(
+                StudentProgress.student_id == student_id,
+                StudentProgress.topic_id == tid,
+            ).first()
+            topic = db.query(Topic).filter(Topic.id == tid).first()
+            t_name = topic.name if topic else f"Topic #{tid}"
+            score = prog.mastery_score if prog else 50.0
+            if score >= 60.0:
+                strong_areas.append(t_name)
+            else:
+                weak_areas.append(t_name)
+                recommended_focus.append(t_name)
+
+            topic_performances.append(
+                TopicPerformance(
+                    topic_id=tid,
+                    topic_name=t_name,
+                    total_questions=sum(1 for a in latest_by_q.values() if a.question and a.question.topic_id == tid),
+                    correct_count=sum(1 for a in latest_by_q.values() if a.question and a.question.topic_id == tid and a.is_correct),
+                    accuracy_percentage=score,
+                    mastery_score_before=score,
+                    mastery_score_after=score,
+                    mastery_band="Strong" if score >= 60 else "Weak",
+                    priority_level=1 if score < 40 else (2 if score < 60 else 4),
+                )
+            )
+
+        return AssessmentResultResponse(
+            assessment_id=assessment.id,
+            assessment_title=assessment.title,
+            total_questions=total_q,
+            correct_answers=total_correct,
+            incorrect_answers=total_q - total_correct,
+            accuracy_percentage=round(overall_acc, 1),
+            total_time_seconds=total_time,
+            topic_performances=topic_performances,
+            strong_areas=strong_areas,
+            weak_areas=weak_areas,
+            recommended_focus=recommended_focus[:3],
+            study_plan_id=None,
+        )
+
 
 assessment_service = AssessmentService()
+

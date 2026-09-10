@@ -12,6 +12,9 @@ from app.api.routes import (
     assessments,
     adaptive,
     ai,
+    clinical_cases,
+    viva,
+    practice,
 )
 
 api_router = APIRouter()
@@ -28,3 +31,7 @@ api_router.include_router(study_plans.router)
 api_router.include_router(assessments.router)
 api_router.include_router(adaptive.router)
 api_router.include_router(ai.router)
+api_router.include_router(clinical_cases.router)
+api_router.include_router(viva.router)
+api_router.include_router(practice.router)
+

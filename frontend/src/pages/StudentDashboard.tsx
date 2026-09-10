@@ -191,6 +191,53 @@ export const StudentDashboard: React.FC = () => {
         </div>
       )}
 
+      {/* Quick Actions Navigation Bar (Requirement 12) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <button
+          onClick={() => navigate('/assessments')}
+          className="p-4 rounded-2xl bg-white border border-stone-200 hover:border-teal-400 hover:shadow-sm transition-all text-left group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#0d3834] flex items-center justify-center mb-2.5 group-hover:bg-[#0d3834] group-hover:text-white transition-colors">
+            <ClipboardCheck className="w-5 h-5" />
+          </div>
+          <span className="block text-xs font-bold text-stone-900">Diagnostic Test</span>
+          <span className="text-[11px] text-stone-500">Benchmark & Gaps</span>
+        </button>
+
+        <button
+          onClick={() => navigate('/subjects')}
+          className="p-4 rounded-2xl bg-white border border-stone-200 hover:border-teal-400 hover:shadow-sm transition-all text-left group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#0d3834] flex items-center justify-center mb-2.5 group-hover:bg-[#0d3834] group-hover:text-white transition-colors">
+            <BookOpen className="w-5 h-5" />
+          </div>
+          <span className="block text-xs font-bold text-stone-900">Subjects</span>
+          <span className="text-[11px] text-stone-500">Curriculum & Units</span>
+        </button>
+
+        <button
+          onClick={() => navigate('/practice')}
+          className="p-4 rounded-2xl bg-white border border-teal-200 bg-teal-50/40 hover:border-teal-500 hover:shadow-sm transition-all text-left group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center mb-2.5 group-hover:bg-[#0d3834] transition-colors">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <span className="block text-xs font-bold text-stone-900">Practice</span>
+          <span className="text-[11px] text-stone-500">MCQs, Viva & Cases</span>
+        </button>
+
+        <button
+          onClick={() => navigate('/progress')}
+          className="p-4 rounded-2xl bg-white border border-stone-200 hover:border-teal-400 hover:shadow-sm transition-all text-left group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#0d3834] flex items-center justify-center mb-2.5 group-hover:bg-[#0d3834] group-hover:text-white transition-colors">
+            <Award className="w-5 h-5" />
+          </div>
+          <span className="block text-xs font-bold text-stone-900">Progress</span>
+          <span className="text-[11px] text-stone-500">Topic Mastery & Stats</span>
+        </button>
+      </div>
+
       {/* Grid: Main Learning Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left 2 Cols: Personalized Plan & Core Subjects */}
@@ -275,12 +322,28 @@ export const StudentDashboard: React.FC = () => {
                         >
                           P{item.priority}
                         </span>
-                        <Link
-                          to={`/topics/${item.topic_id}`}
-                          className="px-3 py-1.5 bg-[#edf7f6] hover:bg-[#d5ece8] text-[#0d3834] text-xs font-semibold rounded-xl transition-colors"
-                        >
-                          Study
-                        </Link>
+                        {item.content_type === 'mcq' ? (
+                          <Link
+                            to={`/practice/mcq/${item.topic_id}`}
+                            className="px-3.5 py-1.5 bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
+                          >
+                            Practice
+                          </Link>
+                        ) : item.content_type === 'case' ? (
+                          <Link
+                            to="/practice"
+                            className="px-3.5 py-1.5 bg-[#0d3834] hover:bg-[#124b46] text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
+                          >
+                            Solve Case
+                          </Link>
+                        ) : (
+                          <Link
+                            to={`/learn/${item.topic_id}`}
+                            className="px-3.5 py-1.5 bg-[#0d3834] hover:bg-[#124b46] text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
+                          >
+                            Start Learning
+                          </Link>
+                        )}
                       </div>
                     </div>
                   );

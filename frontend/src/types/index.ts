@@ -46,6 +46,7 @@ export interface ContentItem {
   title: string;
   content_type: ContentType;
   content_body: string;
+  content_text?: string;
   difficulty_level: DifficultyLevel;
   reference?: string;
   is_verified: boolean;
@@ -72,6 +73,8 @@ export interface QuestionItem {
   created_at: string;
   options: QuestionOption[];
 }
+
+export type Question = QuestionItem;
 
 export interface Topic {
   id: number;
@@ -161,11 +164,13 @@ export interface AssessmentQuestionMasked {
 export interface Assessment {
   id: number;
   title: string;
-  type: string;
-  subject_id: number;
+  type?: string;
+  assessment_type?: string;
+  subject_id?: number;
   description?: string;
   duration_minutes: number;
-  status: string;
+  is_active?: boolean;
+  status?: string;
   created_at: string;
   question_count?: number;
 }
@@ -203,17 +208,20 @@ export interface TopicPerformanceResult {
 
 export interface AssessmentResultResponse {
   assessment_id: number;
-  title: string;
+  title?: string;
+  assessment_title?: string;
   total_questions: number;
   correct_answers: number;
   incorrect_answers: number;
-  accuracy: number;
+  accuracy?: number;
+  accuracy_percentage?: number;
   total_time_seconds: number;
-  topic_breakdown: TopicPerformanceResult[];
-  strong_areas: string[];
-  weak_areas: string[];
-  recommended_focus: string[];
-  study_plan_generated: boolean;
+  topic_breakdown?: TopicPerformanceResult[];
+  topic_performances?: any[];
+  strong_areas?: string[];
+  weak_areas?: string[];
+  recommended_focus?: string[];
+  study_plan_generated?: boolean;
 }
 
 export interface LearningGapItem {
@@ -264,4 +272,95 @@ export interface StudyPlan {
   status: string;
   items: StudyPlanItem[];
 }
+
+// --- Part 3: Learning & Practice Types ---
+export interface VivaQuestion {
+  id: number;
+  topic_id: number;
+  question_text: string;
+  expected_concepts: string[];
+  model_answer?: string;
+  explanation?: string;
+  difficulty_level: DifficultyLevel;
+  is_verified: boolean;
+}
+
+export interface VivaEvaluationResult {
+  question_id: number;
+  score: number;
+  max_score?: number;
+  feedback?: string;
+  key_concepts_identified?: string[];
+  identified_concepts?: string[];
+  concepts_missed?: string[];
+  missed_concepts?: string[];
+  suggested_revision?: string;
+  model_answer?: string;
+  topic_id?: number;
+  new_mastery_score?: number;
+}
+
+export interface ClinicalCase {
+  id: number;
+  topic_id: number;
+  title: string;
+  case_description?: string;
+  description?: string;
+  patient_age: number;
+  patient_gender: string;
+  chief_complaint: string;
+  symptoms: string;
+  medical_history: string;
+  assessment_findings: string;
+  difficulty_level: DifficultyLevel;
+  is_verified: boolean;
+  key_concepts?: string[];
+  topic_name?: string;
+}
+
+export interface ClinicalCaseSubmission {
+  hypothesis?: string;
+  hypothesis_answer?: string;
+  assessments?: string;
+  assessment_answer?: string;
+  management?: string;
+  management_answer?: string;
+}
+
+export interface StageFeedback {
+  score: number;
+  max_score?: number;
+  points_identified: string[];
+  points_missed?: string[];
+  expected_points?: string[];
+  feedback?: string;
+}
+
+export interface ClinicalCaseResult {
+  case_id: number;
+  overall_score?: number;
+  total_score?: number;
+  max_score?: number;
+  hypothesis_feedback: StageFeedback;
+  assessment_feedback: StageFeedback;
+  management_feedback: StageFeedback;
+  learning_recommendation: string;
+  topic_id: number;
+  new_mastery_score?: number;
+}
+
+export interface MCQPracticeResult {
+  topic_id: number;
+  total_questions: number;
+  attempted: number;
+  correct_count: number;
+  incorrect_count: number;
+  accuracy: number;
+  score?: number;
+  max_score?: number;
+  performance_band: 'Strong' | 'Needs Improvement' | 'Weak' | string;
+  recommended_action: string;
+  new_mastery_score: number;
+}
+
 

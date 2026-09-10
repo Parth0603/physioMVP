@@ -70,5 +70,6 @@ class Topic(Base):
     contents = relationship("Content", back_populates="topic", cascade="all, delete-orphan")
     questions = relationship("Question", back_populates="topic", cascade="all, delete-orphan")
     clinical_cases = relationship("ClinicalCase", back_populates="topic", cascade="all, delete-orphan")
+    viva_questions = relationship("VivaQuestion", back_populates="topic", cascade="all, delete-orphan")
     progress_records = relationship("StudentProgress", back_populates="topic", cascade="all, delete-orphan")
     study_plan_items = relationship("StudyPlanItem", back_populates="topic", cascade="all, delete-orphan")

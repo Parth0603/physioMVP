@@ -12,6 +12,7 @@ import {
   FileCheck,
   GraduationCap,
   Sparkles,
+  Stethoscope,
 } from 'lucide-react';
 
 export const MainLayout: React.FC = () => {
@@ -90,6 +91,20 @@ export const MainLayout: React.FC = () => {
                 >
                   <FileCheck className="w-4 h-4" />
                   Diagnostic Tests
+                </NavLink>
+
+                <NavLink
+                  to="/practice"
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-[#edf7f6] text-[#0d3834] font-semibold'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    }`
+                  }
+                >
+                  <Stethoscope className="w-4 h-4" />
+                  Practice & Cases
                 </NavLink>
 
                 <NavLink
