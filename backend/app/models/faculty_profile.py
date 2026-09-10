@@ -1,20 +1,20 @@
-"""Student Profile model capturing academic context (Institution, BPT course, year, semester)."""
+"""Faculty Profile model capturing academic and clinical departmental context."""
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from app.db.session import Base
 
 
-class StudentProfile(Base):
-    __tablename__ = "student_profiles"
+class FacultyProfile(Base):
+    __tablename__ = "faculty_profiles"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
     institution = Column(String(255), nullable=True)
-    course = Column(String(100), default="Bachelor of Physiotherapy (BPT)", nullable=False)
-    academic_year = Column(Integer, default=1, nullable=False)  # 1st, 2nd, 3rd, 4th year
-    semester = Column(Integer, default=1, nullable=False)       # Semester 1-8
-    enrollment_id = Column(String(100), nullable=True)          # Student registration/roll number
+    department = Column(String(150), default="Musculoskeletal & Orthopedics", nullable=False)
+    designation = Column(String(100), default="Assistant Professor", nullable=False)
+    subjects_taught = Column(String(255), default="Biomechanics & Kinesiology, Orthopedics", nullable=True)
+    faculty_id_number = Column(String(100), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(
         DateTime,
@@ -24,4 +24,4 @@ class StudentProfile(Base):
     )
 
     # Relationships
-    user = relationship("User", back_populates="student_profile")
+    user = relationship("User", back_populates="faculty_profile")

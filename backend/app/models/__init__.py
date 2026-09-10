@@ -1,5 +1,7 @@
 from app.models.user import User, UserRole
 from app.models.student_profile import StudentProfile
+from app.models.faculty_profile import FacultyProfile
+from app.models.admin_profile import AdminProfile
 from app.models.academic import Subject, Unit, Topic, DifficultyLevel
 from app.models.content import Content, ContentType
 from app.models.question import Question, QuestionOption, QuestionType

@@ -64,13 +64,12 @@ export const AssessmentResultPage: React.FC = () => {
   const getPriorityBadgeClass = (level: number) => {
     switch (level) {
       case 1:
-        return 'bg-rose-100 text-rose-800 border-rose-200';
+        return 'bg-rose-50 text-rose-700 border-rose-200';
       case 2:
-        return 'bg-amber-100 text-amber-800 border-amber-200';
+        return 'bg-amber-50 text-amber-700 border-amber-200';
       case 3:
-        return 'bg-[#edf7f6] text-[#0d3834] border-[#b0dcd5]';
       default:
-        return 'bg-[#f0fdf9] text-[#065f46] border-[#a7f3d0]';
+        return 'bg-[#edf7f6] text-[#0d3834] border-[#b0dcd5]';
     }
   };
 
@@ -261,7 +260,14 @@ export const AssessmentResultPage: React.FC = () => {
                 const updated = Math.round(tb.mastery_score_after ?? tb.updated_mastery ?? 50);
                 const count = tb.total_questions ?? tb.questions_count ?? 1;
                 const pLevel = tb.priority_level ?? 2;
-                const pLabel = tb.mastery_band || tb.priority_label || (pLevel === 1 ? 'High Gap' : 'Normal');
+                const pLabel =
+                  tb.priority_label === 'HIGH' || tb.priority_label === 'MEDIUM' || tb.priority_label === 'LOW'
+                    ? tb.priority_label
+                    : pLevel === 1
+                    ? 'HIGH'
+                    : pLevel === 2
+                    ? 'MEDIUM'
+                    : 'LOW';
 
                 return (
                   <tr key={tb.topic_id} className="hover:bg-slate-50/50 transition-colors">
@@ -284,7 +290,7 @@ export const AssessmentResultPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span
-                        className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold uppercase border ${getPriorityBadgeClass(
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getPriorityBadgeClass(
                           pLevel
                         )}`}
                       >
@@ -323,7 +329,7 @@ export const AssessmentResultPage: React.FC = () => {
             <RotateCw className="w-4 h-4" /> Retake Test
           </Link>
           <Link
-            to="/"
+            to="/dashboard"
             className="px-6 py-2.5 bg-[#14b8a6] hover:bg-[#0d9488] text-white rounded-xl font-bold text-xs shadow transition-colors flex items-center gap-2"
           >
             View My Learning Plan <ArrowRight className="w-4 h-4" />

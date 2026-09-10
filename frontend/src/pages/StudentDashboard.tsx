@@ -9,6 +9,7 @@ import {
   ProgressSummary,
   StudentProgress,
   StudyPlan,
+  StudyPlanItem,
   LearningGapItem,
   RevisionDueItem,
 } from '../types';
@@ -106,17 +107,139 @@ export const StudentDashboard: React.FC = () => {
   const profile = user?.student_profile;
   const hasTakenAssessment = (summary?.total_attempts || 0) > 0 || recentProgress.length > 0;
 
-  const getPriorityBadge = (priority: number) => {
+  const getPriorityLabel = (priority: number): string => {
     switch (priority) {
       case 1:
-        return 'bg-rose-100 text-rose-800 border-rose-200';
+        return 'HIGH PRIORITY';
       case 2:
-        return 'bg-amber-100 text-amber-800 border-amber-200';
+        return 'MEDIUM PRIORITY';
       case 3:
-        return 'bg-[#edf7f6] text-[#0d3834] border-[#b0dcd5]';
       default:
-        return 'bg-[#f0fdf9] text-[#065f46] border-[#a7f3d0]';
+        return 'LOW PRIORITY';
     }
+  };
+
+  const getPriorityBadgeStyle = (priority: number): string => {
+    switch (priority) {
+      case 1:
+        return 'bg-rose-50 text-rose-700 border-rose-200';
+      case 2:
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 3:
+      default:
+        return 'bg-[#edf7f6] text-[#0d3834] border-[#b0dcd5]';
+    }
+  };
+
+  const getGapPriorityBadgeStyle = (priority: number): string => {
+    switch (priority) {
+      case 1:
+        return 'bg-rose-50 text-rose-700 border-rose-200';
+      case 2:
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 3:
+      default:
+        return 'bg-[#edf7f6] text-[#0d3834] border-[#b0dcd5]';
+    }
+  };
+
+  const getLearningPurpose = (
+    item: StudyPlanItem
+  ): { label: 'RECOMMENDED' | 'REVISION' | 'PRACTICE' | 'CLINICAL'; badgeClass: string } => {
+    const rawType = (item.content_type || item.task_type || '').toLowerCase();
+    const isRevision =
+      rawType === 'revision' ||
+      item.status === 'revision' ||
+      revisionsDue.some((r) => r.topic_id === item.topic_id);
+
+    if (isRevision && rawType !== 'mcq' && rawType !== 'viva' && !rawType.includes('case')) {
+      return {
+        label: 'REVISION',
+        badgeClass: 'bg-indigo-50 text-indigo-800 border-indigo-200',
+      };
+    }
+
+    if (
+      rawType === 'case' ||
+      rawType === 'clinical_case' ||
+      rawType === 'clinical_guideline' ||
+      rawType.includes('clinical')
+    ) {
+      return {
+        label: 'CLINICAL',
+        badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+      };
+    }
+
+    if (
+      rawType === 'mcq' ||
+      rawType === 'viva' ||
+      rawType === 'practice' ||
+      rawType.includes('question')
+    ) {
+      return {
+        label: 'PRACTICE',
+        badgeClass: 'bg-sky-50 text-sky-800 border-sky-200',
+      };
+    }
+
+    return {
+      label: 'RECOMMENDED',
+      badgeClass: 'bg-teal-50 text-teal-800 border-teal-200',
+    };
+  };
+
+  const getActivityDetails = (item: StudyPlanItem): { name: string; actionText: string; link: string } => {
+    const rawType = (item.content_type || item.task_type || '').toLowerCase();
+    const isRevision = revisionsDue.some((r) => r.topic_id === item.topic_id);
+
+    if (rawType === 'case' || rawType === 'clinical_case') {
+      const caseRoute = item.topic_id === 2 ? '/practice/case/1' : item.topic_id === 5 ? '/practice/case/2' : item.topic_id === 3 ? '/practice/case/3' : '/practice';
+      return {
+        name: 'Clinical Case',
+        actionText: 'Solve Case',
+        link: caseRoute,
+      };
+    }
+
+    if (rawType === 'clinical_guideline' || rawType.includes('clinical')) {
+      const caseRoute = item.topic_id === 2 ? '/practice/case/1' : item.topic_id === 5 ? '/practice/case/2' : item.topic_id === 3 ? '/practice/case/3' : '/practice';
+      return {
+        name: 'Clinical Case',
+        actionText: 'Solve Case',
+        link: caseRoute,
+      };
+    }
+
+    if (rawType === 'mcq') {
+      return {
+        name: 'MCQ',
+        actionText: 'Practice',
+        link: `/practice/mcq/${item.topic_id}`,
+      };
+    }
+
+    if (rawType === 'viva') {
+      return {
+        name: 'Viva Voce',
+        actionText: 'Practice',
+        link: `/practice/viva/${item.topic_id}`,
+      };
+    }
+
+    if (isRevision) {
+      return {
+        name: 'Concept',
+        actionText: 'Review',
+        link: `/learn/${item.topic_id}`,
+      };
+    }
+
+    return {
+      name: 'Concept',
+      actionText: 'Start Learning',
+      link: `/learn/${item.topic_id}`,
+    };
   };
 
   return (
@@ -272,20 +395,25 @@ export const StudentDashboard: React.FC = () => {
               <div className="space-y-3">
                 {studyPlan.items.map((item) => {
                   const isCompleted = item.status === 'completed';
+                  const purpose = getLearningPurpose(item);
+                  const priorityLabel = getPriorityLabel(item.priority);
+                  const priorityStyle = getPriorityBadgeStyle(item.priority);
+                  const activity = getActivityDetails(item);
+
                   return (
                     <div
                       key={item.id}
-                      className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-4 ${
+                      className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                         isCompleted
                           ? 'bg-slate-50/70 border-slate-200 opacity-60'
-                          : 'bg-white border-slate-200 hover:border-[#2dd4bf] shadow-sm'
+                          : 'bg-white border-slate-200 hover:border-[#14b8a6] shadow-sm'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-start gap-3.5">
                         <button
                           onClick={() => handleCompleteItem(item.id)}
                           disabled={isCompleted}
-                          className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-colors ${
+                          className={`w-6 h-6 mt-0.5 rounded-lg flex items-center justify-center border transition-colors shrink-0 ${
                             isCompleted
                               ? 'bg-[#14b8a6] border-[#14b8a6] text-white'
                               : 'border-slate-300 hover:border-[#0d3834] text-transparent'
@@ -293,7 +421,7 @@ export const StudentDashboard: React.FC = () => {
                         >
                           <CheckCircle className="w-4 h-4 text-white" />
                         </button>
-                        <div>
+                        <div className="space-y-1.5">
                           <p
                             className={`text-sm font-bold ${
                               isCompleted ? 'line-through text-slate-400' : 'text-slate-900'
@@ -301,49 +429,45 @@ export const StudentDashboard: React.FC = () => {
                           >
                             {item.topic?.name || item.topic_name || `Topic #${item.topic_id}`}
                           </p>
-                          <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
-                            <span className="capitalize font-medium text-slate-600">
-                              {(item.content_type || item.task_type || 'concept').replace(/_/g, ' ')}
+
+                          {/* Purpose & Priority Badges */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${purpose.badgeClass}`}
+                            >
+                              {purpose.label}
                             </span>
+                            <span className="text-slate-300 text-xs font-bold">•</span>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${priorityStyle}`}
+                            >
+                              {priorityLabel}
+                            </span>
+                          </div>
+
+                          {/* Activity & Estimated Time */}
+                          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                            <span className="text-slate-700">{activity.name}</span>
                             <span>•</span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5 text-slate-400" />
-                              {item.estimated_minutes || 30} min
+                              {item.estimated_minutes || 25} min
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase border ${getPriorityBadge(
-                            item.priority
-                          )}`}
+                      <div className="flex items-center sm:self-center self-end shrink-0">
+                        <Link
+                          to={activity.link}
+                          className={`px-4 py-2 text-white text-xs font-bold rounded-xl transition-colors shadow-sm ${
+                            purpose.label === 'PRACTICE'
+                              ? 'bg-teal-700 hover:bg-teal-800'
+                              : 'bg-[#0d3834] hover:bg-[#124b46]'
+                          }`}
                         >
-                          P{item.priority}
-                        </span>
-                        {item.content_type === 'mcq' ? (
-                          <Link
-                            to={`/practice/mcq/${item.topic_id}`}
-                            className="px-3.5 py-1.5 bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
-                          >
-                            Practice
-                          </Link>
-                        ) : item.content_type === 'case' ? (
-                          <Link
-                            to="/practice"
-                            className="px-3.5 py-1.5 bg-[#0d3834] hover:bg-[#124b46] text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
-                          >
-                            Solve Case
-                          </Link>
-                        ) : (
-                          <Link
-                            to={`/learn/${item.topic_id}`}
-                            className="px-3.5 py-1.5 bg-[#0d3834] hover:bg-[#124b46] text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
-                          >
-                            Start Learning
-                          </Link>
-                        )}
+                          {activity.actionText}
+                        </Link>
                       </div>
                     </div>
                   );
@@ -459,11 +583,17 @@ export const StudentDashboard: React.FC = () => {
                     </div>
                     <div className="text-right flex-shrink-0">
                       <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border mb-1 ${getPriorityBadge(
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border mb-1 ${getGapPriorityBadgeStyle(
                           gap.priority_level
                         )}`}
                       >
-                        {gap.priority_label}
+                        {gap.priority_label === 'HIGH' || gap.priority_label === 'MEDIUM' || gap.priority_label === 'LOW'
+                          ? gap.priority_label
+                          : gap.priority_level === 1
+                          ? 'HIGH'
+                          : gap.priority_level === 2
+                          ? 'MEDIUM'
+                          : 'LOW'}
                       </span>
                       <span className="block text-xs font-black text-slate-700">
                         {Math.round(gap.mastery_score)}%

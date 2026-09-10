@@ -31,6 +31,8 @@ class User(Base):
 
     # Relationships
     student_profile = relationship("StudentProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    faculty_profile = relationship("FacultyProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    admin_profile = relationship("AdminProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
     progress_records = relationship("StudentProgress", back_populates="student", cascade="all, delete-orphan")
     study_plans = relationship("StudyPlan", back_populates="student", cascade="all, delete-orphan")
     attempts = relationship("Attempt", back_populates="student", cascade="all, delete-orphan")

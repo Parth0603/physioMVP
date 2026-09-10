@@ -65,13 +65,12 @@ export const ProgressPage: React.FC = () => {
   const getPriorityBadge = (priority: number) => {
     switch (priority) {
       case 1:
-        return 'bg-rose-100 text-rose-800 border-rose-200';
+        return 'bg-rose-50 text-rose-700 border-rose-200';
       case 2:
-        return 'bg-amber-100 text-amber-800 border-amber-200';
+        return 'bg-amber-50 text-amber-700 border-amber-200';
       case 3:
-        return 'bg-[#edf7f6] text-[#0d3834] border-[#b0dcd5]';
       default:
-        return 'bg-[#f0fdf9] text-[#065f46] border-[#a7f3d0]';
+        return 'bg-[#edf7f6] text-[#0d3834] border-[#b0dcd5]';
     }
   };
 
@@ -248,7 +247,13 @@ export const ProgressPage: React.FC = () => {
                           gap.priority_level
                         )}`}
                       >
-                        {gap.priority_label}
+                        {gap.priority_label === 'HIGH' || gap.priority_label === 'MEDIUM' || gap.priority_label === 'LOW'
+                          ? gap.priority_label
+                          : gap.priority_level === 1
+                          ? 'HIGH'
+                          : gap.priority_level === 2
+                          ? 'MEDIUM'
+                          : 'LOW'}
                       </span>
                     </td>
                     <td className="py-4 px-6 text-right">
